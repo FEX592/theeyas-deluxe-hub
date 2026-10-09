@@ -73,3 +73,10 @@ Use a compact crowned `TDH` mark with a gold bridge accent, paired with the THEE
 - Vercel provides `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `PAYSTACK_SECRET_KEY`, and `VITE_PAYSTACK_PUBLIC_KEY` (or equivalent names documented in `DEPLOYMENT.md`).
 - Supabase Auth email confirmation can remain enabled; the UI tells new users to check email when no session is returned.
 - The first registered account is the initial admin. Subsequent admin creation is link-based and controlled by existing admins.
+
+## Signup confirmation and pending-account cleanup
+
+- Keep Supabase email confirmation enabled. After signup, show a **Resend confirmation email** action; also offer it when sign-in reports an unconfirmed email. Use a 60-second UI cooldown and neutral resend feedback that does not disclose whether an address has an account.
+- A Supabase `pg_cron` job runs every minute and removes only email-provider accounts still unconfirmed at least **5 minutes after their latest confirmation email**. Resending starts a fresh five-minute window. The periodic interval means removal may occur up to about one minute after the threshold.
+- Assign initial administrator privileges only after email confirmation, so an expired pending signup can be removed without leaving an unverified admin or opening first-admin setup to an unverified account. Preserve confirmed users and historical order/payment records.
+- Validate signup, resend, successful confirmation, expiry, repeat signup after cleanup, initial admin assignment, and admin-invite redemption after confirmation.

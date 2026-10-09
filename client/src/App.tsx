@@ -206,39 +206,64 @@ function AuthScreen({ services, inviteToken, onSignedIn }: { services: AppServic
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ kind: "error" | "success"; text: string } | null>(null);
+  const [confirmationPending, setConfirmationPending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = window.setTimeout(() => setResendCooldown((seconds) => Math.max(0, seconds - 1)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [resendCooldown]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setBusy(true);
     setMessage(null);
+    setConfirmationPending(false);
     if (mode === "signup") {
       const { data, error } = await services.supabase.auth.signUp({ email: email.trim(), password, options: { data: { display_name: displayName.trim(), invite_token: inviteToken || null } } });
-      if (error) setMessage({ kind: "error", text: error.message });
+      if (error) {
+        setMessage({ kind: "error", text: error.message });
+        if (/already registered|email not confirmed/i.test(error.message)) setConfirmationPending(true);
+      }
       else if (data.session) onSignedIn(data.session);
-      else setMessage({ kind: "success", text: "Check your email to confirm the account, then sign in." });
+      else {
+        setConfirmationPending(true);
+        setMessage({ kind: "success", text: "Check your email to confirm the account. If it doesn’t arrive, you can resend the confirmation email." });
+      }
     } else {
       const { data, error } = await services.supabase.auth.signInWithPassword({ email: email.trim(), password });
-      if (error) setMessage({ kind: "error", text: error.message });
+      if (error) {
+        setMessage({ kind: "error", text: error.message });
+        if (error.message.toLowerCase().includes("email not confirmed")) setConfirmationPending(true);
+      }
       else if (data.session) onSignedIn(data.session);
     }
     setBusy(false);
   };
 
   const resendConfirmation = async () => {
+    if (busy || resendCooldown > 0 || !email.trim()) return;
     setBusy(true);
-    const { error } = await services.supabase.auth.resend({ type: "signup", email: email.trim() });
-    if (error) setMessage({ kind: "error", text: error.message });
-    else setMessage({ kind: "success", text: "Confirmation email sent again. Check your inbox and spam folder." });
-    setBusy(false);
+    setResendCooldown(60);
+    try {
+      const { error } = await services.supabase.auth.resend({ type: "signup", email: email.trim() });
+      if (error) setMessage({ kind: "error", text: "We couldn’t send the email right now. Please wait a moment and try again." });
+      else setMessage({ kind: "success", text: "If confirmation is still pending for this address, a new email will be sent. Check your inbox and spam folder." });
+    } catch {
+      setMessage({ kind: "error", text: "We couldn’t send the email right now. Please wait a moment and try again." });
+    } finally {
+      setBusy(false);
+    }
   };
 
   return <div className="auth-layout">
     <aside className="auth-rail"><BrandLockup /><div className="auth-rail-copy"><span className="eyebrow">THEEYA’S DELUXE HUB</span><h1>Selected spaces.<br /><em>Clear access.</em></h1><p>Discover and purchase access to WhatsApp Groups and Channels.</p></div><div className="auth-rail-footer"><span className="gold-line" /> <span>Marketplace access is for signed-in users.</span></div></aside>
     <main className="auth-main"><div className="auth-panel">
-      <div className="auth-panel-header"><span className="eyebrow">ACCOUNT ACCESS</span><div className="auth-tabs"><button className={mode === "signin" ? "active" : ""} onClick={() => { setMode("signin"); setMessage(null); }}>Sign in</button><button className={mode === "signup" ? "active" : ""} onClick={() => { setMode("signup"); setMessage(null); }}>Create account</button></div></div>
+      <div className="auth-panel-header"><span className="eyebrow">ACCOUNT ACCESS</span><div className="auth-tabs"><button className={mode === "signin" ? "active" : ""} onClick={() => { setMode("signin"); setMessage(null); setConfirmationPending(false); }}>Sign in</button><button className={mode === "signup" ? "active" : ""} onClick={() => { setMode("signup"); setMessage(null); setConfirmationPending(false); }}>Create account</button></div></div>
       {inviteToken && <Notice kind="success">Admin invite detected. Sign in or create an account to redeem it.</Notice>}
       {message && <Notice kind={message.kind}>{message.text}</Notice>}
-      {mode === "signin" && message?.kind === "error" && message.text.toLowerCase().includes("email not confirmed") && <Button variant="outline" disabled={busy || !email.trim()} onClick={resendConfirmation}>Resend confirmation email</Button>}
+      {confirmationPending && <Button variant="outline" disabled={busy || !email.trim() || resendCooldown > 0} onClick={resendConfirmation}>{resendCooldown > 0 ? `Resend available in ${resendCooldown}s` : "Resend confirmation email"}</Button>}
       <form className="auth-form" onSubmit={submit}>
         {mode === "signup" && <Field label="Display name" value={displayName} onChange={setDisplayName} placeholder="How the team should identify you" required />}
         <Field label="Email address" type="email" value={email} onChange={setEmail} placeholder="you@example.com" required />

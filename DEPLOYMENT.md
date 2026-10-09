@@ -15,12 +15,12 @@ The frontend also accepts `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Runt
 ## Supabase setup
 
 1. Open the Supabase SQL editor.
-2. For a new database, run [`supabase/schema.sql`](./supabase/schema.sql). For the existing project that already has the app schema, do not rerun the base setup; review and apply [`supabase/migrations/20261008225000_payment_provider_architecture.sql`](./supabase/migrations/20261008225000_payment_provider_architecture.sql) only.
+2. For a new database, run [`supabase/schema.sql`](./supabase/schema.sql). For the existing project that already has the app schema, do not rerun the base setup; apply the outstanding migrations in order, including the payment architecture and [`supabase/migrations/20261009224500_signup_confirmation_cleanup.sql`](./supabase/migrations/20261009224500_signup_confirmation_cleanup.sql).
 3. In Authentication settings, configure the site URL and redirect URLs for the Vercel domain.
-4. Decide whether email confirmation should be required. When it is enabled, the site tells new users to confirm before signing in.
+4. Keep email confirmation enabled. The app offers a resend action for pending confirmation. The signup cleanup migration installs a Supabase `pg_cron` job that removes only email-provider accounts whose latest confirmation email is at least five minutes old and which remain unconfirmed; the job checks every minute, so cleanup can occur up to roughly one minute after the five-minute threshold. Resending starts a fresh five-minute window.
 5. After deploying this source and applying the payment migration, sign in as an administrator, open **Admin → Payments**, configure the installed provider in **Test** mode, test the connection, and activate it. Configure and test Live separately before confirming Live activation.
 
-The first user created after the schema is applied becomes an administrator. After that, new administrators must use an invite link created in the Admin workspace. The invite works for a new sign-up or an existing signed-in user.
+The first user to successfully confirm an email after the cleanup migration becomes an administrator. Unverified signups do not receive administrator privileges. After initial setup, new administrators must use an invite link created in the Admin workspace. The invite works for a new sign-up or an existing signed-in user.
 
 ## Payment setup
 
