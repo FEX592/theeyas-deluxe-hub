@@ -4,7 +4,7 @@
 
 Build a gated marketplace for discovering and purchasing access to WhatsApp Groups and Channels. Visitors must sign up or sign in before seeing the storefront. The first successful registration becomes the initial administrator. Later administrators can create shareable admin invite links that promote both newly registered users and existing users after they sign in.
 
-The browser uses Supabase Auth and Supabase Postgres/RLS directly; this is application authentication, not Manus authentication. Paystack initialization and verification use Vercel serverless functions so the Paystack secret and Supabase service-role key never enter the browser bundle.
+The browser uses Supabase Auth and Supabase Postgres/RLS directly. Paystack initialization and verification use Vercel serverless functions so the Paystack secret and Supabase service-role key never enter the browser bundle.
 
 Customer-facing copy remains factual and concise, using the approved wording from the supplied brand board. No fabricated listings, counts, testimonials, urgency, or unsupported claims are added.
 
@@ -72,7 +72,7 @@ Use a compact crowned `TDH` mark with a gold bridge accent, paired with the THEE
 
 - Vercel provides `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `PAYSTACK_SECRET_KEY`, and `VITE_PAYSTACK_PUBLIC_KEY` (or equivalent names documented in `DEPLOYMENT.md`).
 - Supabase Auth email confirmation can remain enabled; the UI tells new users to check email when no session is returned.
-- The first registered account is the initial admin. Subsequent admin creation is link-based and controlled by existing admins.
+- The initial administrator is established through the protected deployment bootstrap flow. Subsequent administrator creation is invitation-based and controlled by existing administrators.
 
 ## Signup confirmation and pending-account cleanup
 

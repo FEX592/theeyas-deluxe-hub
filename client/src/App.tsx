@@ -296,7 +296,7 @@ function Storefront({ services, session, profile, onAdmin, onSettings, onSignOut
 
   const loadListings = async () => {
     setLoading(true);
-    const { data, error } = await services.supabase.from("listings").select("id,name,type,description,price,currency,category,access_link,status,created_at").eq("status", "published").order("created_at", { ascending: false });
+    const { data, error } = await services.supabase.from("published_listings").select("id,name,type,description,price,currency,category,status,created_at").order("created_at", { ascending: false });
     if (error) onNotice({ kind: "error", text: error.message });
     setListings((data as Listing[]) ?? []);
     setLoading(false);
@@ -310,7 +310,7 @@ function Storefront({ services, session, profile, onAdmin, onSettings, onSignOut
     event.preventDefault();
     setTrackBusy(true);
     setTrackedOrder(null);
-    const { data, error } = await services.supabase.from("orders").select("*").eq("order_id", trackId.trim()).eq("whatsapp_number", trackWhatsApp.trim()).maybeSingle();
+    const { data, error } = await services.supabase.rpc("lookup_customer_order", { p_order_id: trackId.trim(), p_whatsapp_number: trackWhatsApp.trim() }).maybeSingle();
     if (error || !data) onNotice({ kind: "error", text: error?.message || "No order matched those details." });
     else setTrackedOrder(data as Order);
     setTrackBusy(false);
@@ -370,8 +370,8 @@ function AdminPanel({ services, session, profile, onBack, onNotice }: { services
   const loadAdmin = async () => {
     setBusy(true);
     const [{ data: listingData, error: listingError }, { data: orderData, error: orderError }, { data: inviteData, error: inviteError }] = await Promise.all([
-      services.supabase.from("listings").select("*").order("created_at", { ascending: false }),
-      services.supabase.from("orders").select("*").order("created_at", { ascending: false }),
+      services.supabase.rpc("admin_listing_snapshot"),
+      services.supabase.rpc("admin_order_snapshot"),
       services.supabase.from("admin_invites").select("*").order("created_at", { ascending: false }),
     ]);
     const firstError = listingError || orderError || inviteError;
@@ -397,7 +397,7 @@ function AdminPanel({ services, session, profile, onBack, onNotice }: { services
   };
 
   const saveOrder = async (order: Order, orderStatus: Order["order_status"], accessLink: string) => {
-    const { error } = await services.supabase.from("orders").update({ order_status: orderStatus, access_link: accessLink.trim() || null }).eq("id", order.id);
+    const { error } = await services.supabase.rpc("admin_update_order", { p_order_id: order.id, p_order_status: orderStatus, p_access_link: accessLink.trim() || null });
     if (error) onNotice({ kind: "error", text: error.message }); else { onNotice({ kind: "success", text: "Order updated." }); loadAdmin(); }
   };
 
