@@ -1,6 +1,6 @@
 # THEEYA’S DELUXE HUB
 
-Dark, authenticated marketplace for purchasing access to approved WhatsApp Groups and Channels.
+Professional marketplace for discovering and purchasing access to approved WhatsApp Groups and Channels.
 
 ## Stack
 
@@ -22,7 +22,9 @@ pnpm build:static
 
 Deploy this repository to Vercel. Vercel automatically detects the JavaScript functions in `api/`; no custom function runtime declaration is required. Add the server and browser-safe variables listed in [`DEPLOYMENT.md`](./DEPLOYMENT.md). For a new database, run [`supabase/schema.sql`](./supabase/schema.sql), then the payment migration. For the existing database that already has the base schema, apply only the migration in `supabase/migrations/` after reviewing it.
 
-The first successful registration becomes the initial administrator. Later administrator accounts are created through invite links from the Admin workspace. Normal customer sign-up remains available after the initial administrator exists.
+Public browsing is available without an account. The initial administrator is created through the protected deployment bootstrap flow documented in [`BOOTSTRAP.md`](./BOOTSTRAP.md); normal signups are customers and later administrator accounts are created through invite links from the Admin workspace.
+
+The storefront uses dedicated customer routes for Home, Marketplace, listing details, checkout, and order tracking. Vercel SPA rewrites preserve direct navigation and refresh behavior.
 
 ## Payments
 

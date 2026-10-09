@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { BrowserRouter, Link, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   BarChart3,
@@ -35,6 +36,7 @@ import {
 import { getAppServices, type AppServices } from "./lib/supabase";
 import type { AdminInvite, Listing, Order, Profile } from "./lib/types";
 import PaymentsSettings from "./PaymentsSettings";
+import { CheckoutPage, HomePage, ListingDetailPage, MarketplacePage, PublicHeader, TrackOrderPage } from "./PublicPages";
 import "./index.css";
 
 const CANONICAL_SITE_URL = "https://theeyadeluxehub.vercel.app";
@@ -92,7 +94,6 @@ function App() {
   const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeView, setActiveView] = useState<"store" | "admin" | "settings">("store");
   const [notice, setNotice] = useState<{ kind: "info" | "success" | "error"; text: string } | null>(null);
   const [inviteToken, setInviteToken] = useState(() => new URLSearchParams(window.location.search).get("invite") || "");
   const [paymentReference, setPaymentReference] = useState(() => new URLSearchParams(window.location.search).get("reference") || "");
@@ -171,24 +172,20 @@ function App() {
   if (isLoading) return <LoadingScreen label="Loading account" />;
   if (bootError) return <ConfigurationScreen message={bootError} />;
   if (!services) return <LoadingScreen label="Preparing site" />;
-  if (!session) return <AuthScreen services={services} inviteToken={inviteToken} onSignedIn={setSession} />;
-  if (!profile) return <LoadingScreen label="Loading account permissions" />;
+  return <BrowserRouter><ApplicationRoutes services={services} session={session} profile={profile} inviteToken={inviteToken} notice={notice} setNotice={setNotice} setSession={setSession} /></BrowserRouter>;
+}
 
-  const signOut = async () => {
-    await services.supabase.auth.signOut();
-    setActiveView("store");
-  };
+function ApplicationRoutes({ services, session, profile, inviteToken, notice, setNotice, setSession }: { services: AppServices; session: any; profile: Profile | null; inviteToken: string; notice: { kind: "info" | "success" | "error"; text: string } | null; setNotice: (notice: { kind: "info" | "success" | "error"; text: string } | null) => void; setSession: (session: any) => void }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const signOut = async () => { await services.supabase.auth.signOut(); navigate("/"); };
+  const onNotice = (next: { kind: "info" | "success" | "error"; text: string }) => setNotice(next);
+  const publicProps = { services, profile, onSignOut: signOut, onNotice };
+  return <div className="app-shell">{notice && <div className="global-notice"><Notice kind={notice.kind} onClose={() => setNotice(null)}>{notice.text}</Notice></div>}{!session ? <Routes><Route path="/" element={<HomePage {...publicProps} />} /><Route path="/marketplace" element={<MarketplacePage {...publicProps} />} /><Route path="/marketplace/:slug" element={<ListingDetailPage {...publicProps} />} /><Route path="/checkout/:listingId" element={<CheckoutPage {...publicProps} session={null} />} /><Route path="/track-order" element={<TrackOrderPage services={services} profile={null} />} /><Route path="/login" element={<AuthScreen services={services} inviteToken={inviteToken} onSignedIn={setSession} />} /><Route path="/signup" element={<AuthScreen services={services} inviteToken={inviteToken} onSignedIn={setSession} />} /><Route path="*" element={<Navigate to="/" replace />} /></Routes> : !profile ? <LoadingScreen label="Loading account permissions" /> : <Routes><Route path="/" element={<HomePage {...publicProps} />} /><Route path="/marketplace" element={<MarketplacePage {...publicProps} />} /><Route path="/marketplace/:slug" element={<ListingDetailPage {...publicProps} />} /><Route path="/checkout/:listingId" element={<CheckoutPage {...publicProps} session={session} />} /><Route path="/track-order" element={<TrackOrderPage services={services} profile={profile} onSignOut={signOut} />} /><Route path="/account" element={<SettingsView services={services} session={session} profile={profile} onBack={() => navigate("/")} onSignedOut={signOut} onNotice={onNotice} />} /><Route path="/account/security" element={<SettingsView services={services} session={session} profile={profile} onBack={() => navigate("/")} onSignedOut={signOut} onNotice={onNotice} />} /><Route path="/admin/*" element={profile.role === "admin" ? <AdminRoutes services={services} session={session} profile={profile} onNotice={onNotice} onBack={() => navigate("/")} /> : <Navigate to="/" replace />} /><Route path="/login" element={<Navigate to="/" replace />} /><Route path="/signup" element={<Navigate to="/" replace />} /><Route path="*" element={<Navigate to={location.pathname.startsWith("/admin") ? "/admin" : "/"} replace />} /></Routes>}</div>;
+}
 
-  return <div className="app-shell">
-    {notice && <div className="global-notice"><Notice kind={notice.kind} onClose={() => setNotice(null)}>{notice.text}</Notice></div>}
-    {activeView === "admin" && profile.role === "admin" ? (
-      <AdminPanel services={services} session={session} profile={profile} onBack={() => setActiveView("store")} onNotice={(next) => setNotice(next)} />
-    ) : activeView === "settings" ? (
-      <SettingsView services={services} session={session} profile={profile} onBack={() => setActiveView("store")} onSignedOut={signOut} onNotice={(next) => setNotice(next)} />
-    ) : (
-      <Storefront services={services} session={session} profile={profile} onAdmin={() => setActiveView("admin")} onSettings={() => setActiveView("settings")} onSignOut={signOut} onNotice={(next) => setNotice(next)} />
-    )}
-  </div>;
+function AdminRoutes({ services, session, profile, onNotice, onBack }: { services: AppServices; session: any; profile: Profile; onNotice: (notice: { kind: "info" | "success" | "error"; text: string }) => void; onBack: () => void }) {
+  return <Routes><Route index element={<AdminPanel services={services} session={session} profile={profile} initialSection="overview" onBack={onBack} onNotice={onNotice} />} /><Route path="listings" element={<AdminPanel services={services} session={session} profile={profile} initialSection="listings" onBack={onBack} onNotice={onNotice} />} /><Route path="orders" element={<AdminPanel services={services} session={session} profile={profile} initialSection="orders" onBack={onBack} onNotice={onNotice} />} /><Route path="payments" element={<AdminPanel services={services} session={session} profile={profile} initialSection="payments" onBack={onBack} onNotice={onNotice} />} /><Route path="admins" element={<AdminPanel services={services} session={session} profile={profile} initialSection="invites" onBack={onBack} onNotice={onNotice} />} /><Route path="settings" element={<AdminPanel services={services} session={session} profile={profile} initialSection="settings" onBack={onBack} onNotice={onNotice} />} /><Route path="*" element={<Navigate to="/admin" replace />} /></Routes>;
 }
 
 function LoadingScreen({ label }: { label: string }) {
@@ -200,7 +197,8 @@ function ConfigurationScreen({ message }: { message: string }) {
 }
 
 function AuthScreen({ services, inviteToken, onSignedIn }: { services: AppServices; inviteToken: string; onSignedIn: (session: any) => void }) {
-  const [mode, setMode] = useState<"signin" | "signup">(inviteToken ? "signup" : "signin");
+  const location = useLocation();
+  const [mode, setMode] = useState<"signin" | "signup">(location.pathname === "/signup" || inviteToken ? "signup" : "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -353,8 +351,9 @@ function CheckoutModal({ services, session, listing, onClose, onNotice }: { serv
 
 function Modal({ children, onClose }: { children: ReactNode; onClose: () => void }) { return <div className="modal-backdrop" onMouseDown={onClose}><div className="modal-card" onMouseDown={(event) => event.stopPropagation()}><button className="modal-close" onClick={onClose} aria-label="Close"><X size={18} /></button>{children}</div></div>; }
 
-function AdminPanel({ services, session, profile, onBack, onNotice }: { services: AppServices; session: any; profile: Profile; onBack: () => void; onNotice: (notice: { kind: "info" | "success" | "error"; text: string }) => void }) {
-  const [section, setSection] = useState<"overview" | "listings" | "orders" | "invites" | "payments" | "settings">("overview");
+function AdminPanel({ services, session, profile, initialSection = "overview", onBack, onNotice }: { services: AppServices; session: any; profile: Profile; initialSection?: "overview" | "listings" | "orders" | "invites" | "payments" | "settings"; onBack: () => void; onNotice: (notice: { kind: "info" | "success" | "error"; text: string }) => void }) {
+  const navigate = useNavigate();
+  const [section, setSection] = useState<"overview" | "listings" | "orders" | "invites" | "payments" | "settings">(initialSection);
   const [collapsed, setCollapsed] = useState(false);
   const [listings, setListings] = useState<Listing[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -381,7 +380,7 @@ function AdminPanel({ services, session, profile, onBack, onNotice }: { services
     setInvites((inviteData as AdminInvite[]) ?? []);
     setBusy(false);
   };
-  useEffect(() => { loadAdmin(); }, [services]);
+  useEffect(() => { setSection(initialSection); loadAdmin(); }, [services, initialSection]);
 
   const saveListing = async (draft: Partial<Listing>) => {
     const payload = { name: draft.name?.trim(), type: draft.type, description: draft.description?.trim(), price: Number(draft.price), currency: draft.currency || "₦", category: draft.category?.trim() || null, access_link: draft.access_link?.trim() || null, status: draft.status || "draft" };
@@ -401,7 +400,7 @@ function AdminPanel({ services, session, profile, onBack, onNotice }: { services
     if (error) onNotice({ kind: "error", text: error.message }); else { onNotice({ kind: "success", text: "Order updated." }); loadAdmin(); }
   };
 
-  return <div className="admin-shell"><aside className={`admin-sidebar ${collapsed ? "collapsed" : ""}`}><div className="admin-sidebar-top"><BrandLockup compact={!collapsed} /><button onClick={() => setCollapsed((value) => !value)} className="collapse-button" aria-label="Toggle sidebar">{collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}</button></div><div className="admin-workspace-label">{!collapsed && <><span>WORKSPACE</span><strong>Deluxe Hub</strong></>}</div><nav className="admin-nav">{[{ id: "overview", label: "Overview", icon: <BarChart3 size={17} /> }, { id: "listings", label: "Listings", icon: <FileText size={17} /> }, { id: "orders", label: "Orders", icon: <PackageCheck size={17} /> }, { id: "invites", label: "Admin invites", icon: <Users size={17} /> }, { id: "payments", label: "Payments", icon: <CreditCard size={17} /> }, { id: "settings", label: "Account settings", icon: <Settings size={17} /> }].map((item) => <button key={item.id} className={section === item.id ? "active" : ""} onClick={() => setSection(item.id as typeof section)} title={collapsed ? item.label : undefined}>{item.icon}{!collapsed && <span>{item.label}</span>}</button>)}</nav><button className="back-store" onClick={onBack}><ArrowRight size={16} />{!collapsed && "Back to storefront"}</button></aside><main className="admin-main"><header className="admin-topbar"><div><span className="eyebrow">ADMINISTRATION</span><h1>{section === "overview" ? "Good to see you, " : ""}{section === "overview" ? (profile.display_name || "administrator") : sectionTitle(section)}</h1></div><div className="admin-topbar-actions"><span className="admin-user-badge"><span className="avatar">{initials(profile.display_name || profile.email || "A")}</span>{profile.email}</span><Button variant="ghost" onClick={loadAdmin} icon={<RefreshCw size={15} />}>Refresh</Button></div></header>{busy ? <div className="admin-loading"><RefreshCw className="spin" size={19} /><span>Loading workspace data</span></div> : <div className="admin-content">{section === "overview" && <AdminOverview listings={listings} orders={orders} invites={invites} onSection={setSection} />}{section === "listings" && <ListingsManager listings={listings} selected={selectedListing} onSelect={setSelectedListing} onSave={saveListing} onDelete={deleteListing} />}{section === "orders" && <OrdersManager orders={orders} listings={listings} onSave={saveOrder} />}{section === "invites" && <InvitesManager services={services} session={session} invites={invites} onRefresh={loadAdmin} onNotice={onNotice} />}{section === "payments" && <PaymentsSettings session={session} />}{section === "settings" && <SettingsView services={services} session={session} profile={profile} embedded onBack={() => setSection("overview")} onSignedOut={signOut} onNotice={onNotice} />}</div>}</main></div>;
+  return <div className="admin-shell"><aside className={`admin-sidebar ${collapsed ? "collapsed" : ""}`}><div className="admin-sidebar-top"><BrandLockup compact={!collapsed} /><button onClick={() => setCollapsed((value) => !value)} className="collapse-button" aria-label="Toggle sidebar">{collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}</button></div><div className="admin-workspace-label">{!collapsed && <><span>WORKSPACE</span><strong>Deluxe Hub</strong></>}</div><nav className="admin-nav">{[{ id: "overview", path: "/admin", label: "Overview", icon: <BarChart3 size={17} /> }, { id: "listings", path: "/admin/listings", label: "Listings", icon: <FileText size={17} /> }, { id: "orders", path: "/admin/orders", label: "Orders", icon: <PackageCheck size={17} /> }, { id: "invites", path: "/admin/admins", label: "Admin invites", icon: <Users size={17} /> }, { id: "payments", path: "/admin/payments", label: "Payments", icon: <CreditCard size={17} /> }, { id: "settings", path: "/admin/settings", label: "Account settings", icon: <Settings size={17} /> }].map((item) => <button key={item.id} className={section === item.id ? "active" : ""} onClick={() => navigate(item.path)} title={collapsed ? item.label : undefined}>{item.icon}{!collapsed && <span>{item.label}</span>}</button>)}</nav><button className="back-store" onClick={onBack}><ArrowRight size={16} />{!collapsed && "Back to storefront"}</button></aside><main className="admin-main"><header className="admin-topbar"><div><span className="eyebrow">ADMINISTRATION</span><h1>{section === "overview" ? "Good to see you, " : ""}{section === "overview" ? (profile.display_name || "administrator") : sectionTitle(section)}</h1></div><div className="admin-topbar-actions"><span className="admin-user-badge"><span className="avatar">{initials(profile.display_name || profile.email || "A")}</span>{profile.email}</span><Button variant="ghost" onClick={loadAdmin} icon={<RefreshCw size={15} />}>Refresh</Button></div></header>{busy ? <div className="admin-loading"><RefreshCw className="spin" size={19} /><span>Loading workspace data</span></div> : <div className="admin-content">{section === "overview" && <AdminOverview listings={listings} orders={orders} invites={invites} onSection={(next) => navigate(next === "listings" ? "/admin/listings" : next === "orders" ? "/admin/orders" : "/admin/admins")} />}{section === "listings" && <ListingsManager listings={listings} selected={selectedListing} onSelect={setSelectedListing} onSave={saveListing} onDelete={deleteListing} />}{section === "orders" && <OrdersManager orders={orders} listings={listings} onSave={saveOrder} />}{section === "invites" && <InvitesManager services={services} session={session} invites={invites} onRefresh={loadAdmin} onNotice={onNotice} />}{section === "payments" && <PaymentsSettings session={session} />}{section === "settings" && <SettingsView services={services} session={session} profile={profile} embedded onBack={() => navigate("/admin")} onSignedOut={signOut} onNotice={onNotice} />}</div>}</main></div>;
 }
 
 function AdminOverview({ listings, orders, invites, onSection }: { listings: Listing[]; orders: Order[]; invites: AdminInvite[]; onSection: (section: "listings" | "orders" | "invites") => void }) {

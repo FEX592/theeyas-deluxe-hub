@@ -1,5 +1,8 @@
 {
   "buildCommand": "pnpm build:static",
   "outputDirectory": "dist/public",
-  "framework": "vite"
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/((?!api/).*)", "destination": "/" }
+  ]
 }
