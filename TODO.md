@@ -1,9 +1,0 @@
-# Delivery outcomes
-
-- **Authenticated storefront gate** — Before a visitor can access the marketplace, the site requires sign up or sign in using the site’s Supabase Auth flow. The initial administrator is established through the protected deployment bootstrap flow; later administrator access is invitation-based.
-- **Admin-only navigation and workspace** — Only profiles with the `admin` role can see the Admin button. The admin workspace lets administrators manage approved listings, view and update orders, manage admin invites, and open account settings.
-- **Admin invite links** — Existing administrators can create shareable admin invite links. A link can be used by a new user during sign-up or by an existing user after sign-in; successful redemption promotes that user to administrator and marks the invite accepted or expired according to its state.
-- **Account settings and deletion** — Signed-in users can update display name, email, and password, sign out, and request account deletion with an explicit confirmation phrase. The Vercel deletion endpoint removes the authenticated Supabase user through the service role.
-- **Factual dark storefront** — The public experience is dark-themed and uses the supplied THEEYA’S DELUXE HUB palette and approved factual wording. It shows only database listings and does not invent testimonials, popularity data, unsupported security claims, or AI-generated copy.
-- **Paystack-ready checkout and tracking** — Published listings can be selected for checkout, Paystack initialization and verification use Vercel serverless functions, payment/order states map to factual labels, and signed-in customers can track orders by Order ID and WhatsApp number.
-- **Vercel delivery files** — The project includes Vercel build configuration, runtime config handling, serverless API handlers, and Supabase schema/RLS.
