@@ -3,6 +3,7 @@ import {
   ArrowRight,
   BarChart3,
   Check,
+  CreditCard,
   ChevronDown,
   Clipboard,
   Copy,
@@ -24,7 +25,6 @@ import {
   Search,
   Send,
   Settings,
-  ShieldCheck,
   ShoppingBag,
   Sparkles,
   Trash2,
@@ -34,7 +34,10 @@ import {
 } from "lucide-react";
 import { getAppServices, type AppServices } from "./lib/supabase";
 import type { AdminInvite, Listing, Order, Profile } from "./lib/types";
+import PaymentsSettings from "./PaymentsSettings";
 import "./index.css";
+
+const CANONICAL_SITE_URL = "https://theeyadeluxehub.vercel.app";
 
 const navItems = [
   { id: "marketplace", label: "Marketplace" },
@@ -148,12 +151,16 @@ function App() {
 
   useEffect(() => {
     if (!services || !session || !paymentReference) return;
-    fetch(`/api/paystack/verify?reference=${encodeURIComponent(paymentReference)}`, {
+    fetch(`/api/payments/verify?reference=${encodeURIComponent(paymentReference)}`, {
       headers: { Authorization: `Bearer ${session.access_token}` },
     }).then(async (response) => {
       const payload = await response.json().catch(() => ({}));
-      if (response.ok && payload.status === "success") setNotice({ kind: "success", text: "Payment confirmed. Your order is being processed." });
-      else setNotice({ kind: "error", text: payload.error || "Payment could not be verified." });
+      if (response.ok && payload.status === "paid") setNotice({ kind: "success", text: "Payment confirmed. Your order is being processed." });
+      else if (response.ok && ["pending", "processing", "unknown"].includes(payload.status)) setNotice({ kind: "info", text: "Payment is still being confirmed. Check your order status shortly." });
+      else setNotice({ kind: "error", text: payload.error || (payload.status === "cancelled" ? "Payment was cancelled." : payload.status === "expired" ? "Payment session expired." : "Payment could not be completed.") });
+    }).catch(() => {
+      setNotice({ kind: "info", text: "Payment is still being confirmed. Check your order status shortly." });
+    }).finally(() => {
       const url = new URL(window.location.href);
       url.searchParams.delete("reference");
       window.history.replaceState({}, "", url.toString());
@@ -189,7 +196,7 @@ function LoadingScreen({ label }: { label: string }) {
 }
 
 function ConfigurationScreen({ message }: { message: string }) {
-  return <div className="center-screen config-screen"><BrandLockup /><div className="config-card"><span className="eyebrow">SITE SETUP</span><h1>Connect the site before opening it.</h1><p>{message}</p><div className="config-list"><div><span>01</span><p>Add the Supabase URL and anon key to Vercel.</p></div><div><span>02</span><p>Run <code>supabase/schema.sql</code> in the Supabase SQL editor.</p></div><div><span>03</span><p>Add the Paystack secret to Vercel before enabling checkout.</p></div></div></div></div>;
+  return <div className="center-screen config-screen"><BrandLockup /><div className="config-card"><span className="eyebrow">SITE SETUP</span><h1>Connect the site before opening it.</h1><p>{message}</p><div className="config-list"><div><span>01</span><p>Add the Supabase URL and anon key to Vercel.</p></div><div><span>02</span><p>Run <code>supabase/schema.sql</code> in the Supabase SQL editor.</p></div><div><span>03</span><p>Add the the payment provider secret to Vercel before enabling checkout.</p></div></div></div></div>;
 }
 
 function AuthScreen({ services, inviteToken, onSignedIn }: { services: AppServices; inviteToken: string; onSignedIn: (session: any) => void }) {
@@ -197,16 +204,8 @@ function AuthScreen({ services, inviteToken, onSignedIn }: { services: AppServic
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [firstRun, setFirstRun] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ kind: "error" | "success"; text: string } | null>(null);
-
-  useEffect(() => {
-    services.supabase.rpc("registration_status").then(({ data, error }) => {
-      if (error) setFirstRun(null);
-      else setFirstRun(Boolean((data as { first_admin_needed?: boolean })?.first_admin_needed));
-    });
-  }, [services]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -225,21 +224,28 @@ function AuthScreen({ services, inviteToken, onSignedIn }: { services: AppServic
     setBusy(false);
   };
 
+  const resendConfirmation = async () => {
+    setBusy(true);
+    const { error } = await services.supabase.auth.resend({ type: "signup", email: email.trim() });
+    if (error) setMessage({ kind: "error", text: error.message });
+    else setMessage({ kind: "success", text: "Confirmation email sent again. Check your inbox and spam folder." });
+    setBusy(false);
+  };
+
   return <div className="auth-layout">
     <aside className="auth-rail"><BrandLockup /><div className="auth-rail-copy"><span className="eyebrow">THEEYA’S DELUXE HUB</span><h1>Selected spaces.<br /><em>Clear access.</em></h1><p>Discover and purchase access to WhatsApp Groups and Channels.</p></div><div className="auth-rail-footer"><span className="gold-line" /> <span>Marketplace access is for signed-in users.</span></div></aside>
     <main className="auth-main"><div className="auth-panel">
       <div className="auth-panel-header"><span className="eyebrow">ACCOUNT ACCESS</span><div className="auth-tabs"><button className={mode === "signin" ? "active" : ""} onClick={() => { setMode("signin"); setMessage(null); }}>Sign in</button><button className={mode === "signup" ? "active" : ""} onClick={() => { setMode("signup"); setMessage(null); }}>Create account</button></div></div>
       {inviteToken && <Notice kind="success">Admin invite detected. Sign in or create an account to redeem it.</Notice>}
-      {mode === "signup" && firstRun && <div className="first-admin-note"><Crown size={16} /><div><strong>First registration</strong><span>This account will become the initial administrator.</span></div></div>}
-      {mode === "signup" && firstRun === false && !inviteToken && <div className="first-admin-note muted"><ShieldCheck size={16} /><div><strong>Create a customer account</strong><span>Administrator access is added separately through an admin invite.</span></div></div>}
       {message && <Notice kind={message.kind}>{message.text}</Notice>}
+      {mode === "signin" && message?.kind === "error" && message.text.toLowerCase().includes("email not confirmed") && <Button variant="outline" disabled={busy || !email.trim()} onClick={resendConfirmation}>Resend confirmation email</Button>}
       <form className="auth-form" onSubmit={submit}>
         {mode === "signup" && <Field label="Display name" value={displayName} onChange={setDisplayName} placeholder="How the team should identify you" required />}
         <Field label="Email address" type="email" value={email} onChange={setEmail} placeholder="you@example.com" required />
         <Field label="Password" type="password" value={password} onChange={setPassword} placeholder="At least 8 characters" required minLength={8} />
         <Button type="submit" disabled={busy} className="full-width" icon={busy ? <RefreshCw className="spin" size={16} /> : <ArrowRight size={16} />}>{busy ? "Working" : mode === "signin" ? "Sign in" : "Create account"}</Button>
       </form>
-      <p className="auth-footnote">By continuing, you use THEEYA’S DELUXE HUB’s own account system. Payment is handled through Paystack when checkout is available.</p>
+      <p className="auth-footnote">By continuing, you use THEEYA’S DELUXE HUB’s own account system. Payment is handled through the payment provider when checkout is available.</p>
     </div></main>
   </div>;
 }
@@ -288,10 +294,10 @@ function Storefront({ services, session, profile, onAdmin, onSettings, onSignOut
   return <>
     <SiteHeader profile={profile} onAdmin={onAdmin} onSettings={onSettings} onSignOut={onSignOut} />
     <main id="top">
-      <section className="hero-section page-width"><div className="hero-copy"><span className="eyebrow"><span className="eyebrow-line" /> WHATSAPP MARKETPLACE</span><h1>Discover WhatsApp communities <em>worth joining.</em></h1><p>Browse available WhatsApp Groups and Channels, choose what interests you, and purchase access through a simple checkout.</p><div className="hero-actions"><Button onClick={() => document.getElementById("marketplace")?.scrollIntoView({ behavior: "smooth" })} icon={<ArrowRight size={16} />}>Browse Marketplace</Button><a className="text-link" href="#how-it-works">How it works <ChevronDown size={15} /></a></div><div className="hero-meta"><span className="meta-dot" /> Payments are processed through Paystack.</div></div><div className="hero-composition" aria-hidden="true"><div className="composition-ring ring-one" /><div className="composition-ring ring-two" /><div className="floating-label label-top"><MessageCircle size={15} /> WHATSAPP ACCESS</div><div className="composition-card"><div className="card-spark"><Sparkles size={18} /></div><div><strong>Find your next space</strong><span>Browse by what interests you</span></div><ArrowRight size={16} /></div><div className="composition-seal"><Crown size={16} fill="currentColor" /><span>TDH</span></div></div></section>
-      <section className="trust-bar page-width"><TrustItem icon={<LockKeyhole size={17} />} title="Secure payment" copy="Payments are processed through Paystack." /><TrustItem icon={<Clipboard size={17} />} title="Clear order tracking" copy="Track with your Order ID and WhatsApp number." /><TrustItem icon={<PackageCheck size={17} />} title="Order processing" copy="Access is provided after the order is completed." /></section>
+      <section className="hero-section page-width"><div className="hero-copy"><span className="eyebrow"><span className="eyebrow-line" /> WHATSAPP MARKETPLACE</span><h1>Discover WhatsApp communities <em>worth joining.</em></h1><p>Browse available WhatsApp Groups and Channels, choose what interests you, and purchase access through a simple checkout.</p><div className="hero-actions"><Button onClick={() => document.getElementById("marketplace")?.scrollIntoView({ behavior: "smooth" })} icon={<ArrowRight size={16} />}>Browse Marketplace</Button><a className="text-link" href="#how-it-works">How it works <ChevronDown size={15} /></a></div><div className="hero-meta"><span className="meta-dot" /> Payments are processed through the payment provider.</div></div><div className="hero-composition" aria-hidden="true"><div className="composition-ring ring-one" /><div className="composition-ring ring-two" /><div className="floating-label label-top"><MessageCircle size={15} /> WHATSAPP ACCESS</div><div className="composition-card"><div className="card-spark"><Sparkles size={18} /></div><div><strong>Find your next space</strong><span>Browse by what interests you</span></div><ArrowRight size={16} /></div><div className="composition-seal"><Crown size={16} fill="currentColor" /><span>TDH</span></div></div></section>
+      <section className="trust-bar page-width"><TrustItem icon={<LockKeyhole size={17} />} title="Provider checkout" copy="Payments are processed through the payment provider." /><TrustItem icon={<Clipboard size={17} />} title="Clear order tracking" copy="Track with your Order ID and WhatsApp number." /><TrustItem icon={<PackageCheck size={17} />} title="Order processing" copy="Access is provided after the order is completed." /></section>
       <section id="marketplace" className="marketplace-section page-width"><div className="section-header"><div><span className="eyebrow"><span className="eyebrow-line" /> MARKETPLACE</span><h2>Available listings</h2></div><div className="search-field"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search listings" /></div></div>{loading ? <div className="empty-panel"><RefreshCw className="spin" size={20} /><p>Loading listings</p></div> : filtered.length === 0 ? <div className="empty-panel"><ShoppingBag size={25} /><h3>No listings found</h3><p>Try another search or browse all categories.</p></div> : <div className="listing-grid">{filtered.map((item) => <ListingCard key={item.id} item={item} onBuy={() => setCheckoutListing(item)} />)}</div>}</section>
-      <section id="how-it-works" className="process-section"><div className="page-width process-layout"><div className="process-copy"><span className="eyebrow"><span className="eyebrow-line" /> SIMPLE CHECKOUT</span><h2>From discovery<br /><em>to access.</em></h2><p>Choose a listing, complete payment through Paystack, and track your order while it is processed.</p></div><div className="steps"><Step number="01" title="Choose a listing" copy="Browse available WhatsApp Groups and Channels." /><Step number="02" title="Complete payment" copy="You’ll be redirected to Paystack to complete your payment." /><Step number="03" title="Track your order" copy="Use your Order ID and WhatsApp number to check progress." /></div></div></section>
+      <section id="how-it-works" className="process-section"><div className="page-width process-layout"><div className="process-copy"><span className="eyebrow"><span className="eyebrow-line" /> SIMPLE CHECKOUT</span><h2>From discovery<br /><em>to access.</em></h2><p>Choose a listing, complete payment through the payment provider, and track your order while it is processed.</p></div><div className="steps"><Step number="01" title="Choose a listing" copy="Browse available WhatsApp Groups and Channels." /><Step number="02" title="Complete payment" copy="You’ll be redirected to the payment provider to complete your payment." /><Step number="03" title="Track your order" copy="Use your Order ID and WhatsApp number to check progress." /></div></div></section>
       <section id="track-order" className="tracking-section page-width"><div className="tracking-card"><div className="tracking-copy"><span className="eyebrow"><span className="eyebrow-line" /> ORDER TRACKING</span><h2>Keep your order <em>in view.</em></h2><p>Track your order using the Order ID and WhatsApp number provided at checkout.</p></div><div className="tracking-form"><form onSubmit={trackOrder}><Field label="Order ID" value={trackId} onChange={setTrackId} placeholder="e.g. TDH-0001" required /><Field label="WhatsApp number" value={trackWhatsApp} onChange={setTrackWhatsApp} placeholder="Your WhatsApp number" required /><Button type="submit" disabled={trackBusy} className="full-width" icon={trackBusy ? <RefreshCw className="spin" size={16} /> : <ArrowRight size={16} />}>{trackBusy ? "Checking" : "Track Order"}</Button></form>{trackedOrder && <div className="tracked-result"><div className="result-icon"><Check size={17} /></div><div><strong>{statusLabels[trackedOrder.order_status]}</strong><span>{trackedOrder.order_status === "completed" && trackedOrder.access_link ? <a href={trackedOrder.access_link} target="_blank" rel="noreferrer">Open access link <ExternalLink size={13} /></a> : "Your order is being handled according to its current status."}</span></div></div>}</div></div></section>
     </main>
     <footer className="site-footer page-width"><BrandLockup compact /><span>Marketplace for WhatsApp Groups and Channels.</span><span className="footer-rule" /><button onClick={onSettings}>Account settings</button></footer>
@@ -311,19 +317,19 @@ function CheckoutModal({ services, session, listing, onClose, onNotice }: { serv
     event.preventDefault();
     setBusy(true);
     setError("");
-    const response = await fetch("/api/paystack/initialize", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ listingId: listing.id, whatsappNumber: whatsapp.trim(), email: session.user.email }) });
+    const response = await fetch("/api/payments/initialize", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ listingId: listing.id, whatsappNumber: whatsapp.trim() }) });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok || !payload.authorization_url) setError(payload.error || "Checkout is not configured yet.");
-    else { onNotice({ kind: "info", text: "Redirecting to Paystack." }); window.location.href = payload.authorization_url; }
+    if (!response.ok || !payload.checkoutUrl) setError(payload.error || "Checkout is not available right now.");
+    else { onNotice({ kind: "info", text: "Redirecting to the payment provider." }); window.location.href = payload.checkoutUrl; }
     setBusy(false);
   };
-  return <Modal onClose={onClose}><div className="modal-kicker"><ShoppingBag size={15} /> CHECKOUT</div><h2>{listing.name}</h2><p className="modal-intro">You’ll be redirected to Paystack to complete your payment.</p><div className="checkout-summary"><span>{listing.type} · {listing.category || "General"}</span><strong>{formatMoney(listing.price, listing.currency)}</strong></div>{error && <Notice kind="error">{error}</Notice>}<form onSubmit={submit}><Field label="WhatsApp number" value={whatsapp} onChange={setWhatsapp} placeholder="The number for order updates" required /><Button type="submit" disabled={busy} className="full-width" icon={busy ? <RefreshCw className="spin" size={16} /> : <ArrowRight size={16} />}>{busy ? "Preparing payment" : "Continue to Payment"}</Button></form></Modal>;
+  return <Modal onClose={onClose}><div className="modal-kicker"><ShoppingBag size={15} /> CHECKOUT</div><h2>{listing.name}</h2><p className="modal-intro">You’ll be redirected to the payment provider to complete your payment.</p><div className="checkout-summary"><span>{listing.type} · {listing.category || "General"}</span><strong>{formatMoney(listing.price, listing.currency)}</strong></div>{error && <Notice kind="error">{error}</Notice>}<form onSubmit={submit}><Field label="WhatsApp number" value={whatsapp} onChange={setWhatsapp} placeholder="The number for order updates" required /><Button type="submit" disabled={busy} className="full-width" icon={busy ? <RefreshCw className="spin" size={16} /> : <ArrowRight size={16} />}>{busy ? "Preparing payment" : "Continue to Payment"}</Button></form></Modal>;
 }
 
 function Modal({ children, onClose }: { children: ReactNode; onClose: () => void }) { return <div className="modal-backdrop" onMouseDown={onClose}><div className="modal-card" onMouseDown={(event) => event.stopPropagation()}><button className="modal-close" onClick={onClose} aria-label="Close"><X size={18} /></button>{children}</div></div>; }
 
 function AdminPanel({ services, session, profile, onBack, onNotice }: { services: AppServices; session: any; profile: Profile; onBack: () => void; onNotice: (notice: { kind: "info" | "success" | "error"; text: string }) => void }) {
-  const [section, setSection] = useState<"overview" | "listings" | "orders" | "invites" | "settings">("overview");
+  const [section, setSection] = useState<"overview" | "listings" | "orders" | "invites" | "payments" | "settings">("overview");
   const [collapsed, setCollapsed] = useState(false);
   const [listings, setListings] = useState<Listing[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -370,7 +376,7 @@ function AdminPanel({ services, session, profile, onBack, onNotice }: { services
     if (error) onNotice({ kind: "error", text: error.message }); else { onNotice({ kind: "success", text: "Order updated." }); loadAdmin(); }
   };
 
-  return <div className="admin-shell"><aside className={`admin-sidebar ${collapsed ? "collapsed" : ""}`}><div className="admin-sidebar-top"><BrandLockup compact={!collapsed} /><button onClick={() => setCollapsed((value) => !value)} className="collapse-button" aria-label="Toggle sidebar">{collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}</button></div><div className="admin-workspace-label">{!collapsed && <><span>WORKSPACE</span><strong>Deluxe Hub</strong></>}</div><nav className="admin-nav">{[{ id: "overview", label: "Overview", icon: <BarChart3 size={17} /> }, { id: "listings", label: "Listings", icon: <FileText size={17} /> }, { id: "orders", label: "Orders", icon: <PackageCheck size={17} /> }, { id: "invites", label: "Admin invites", icon: <Users size={17} /> }, { id: "settings", label: "Account settings", icon: <Settings size={17} /> }].map((item) => <button key={item.id} className={section === item.id ? "active" : ""} onClick={() => setSection(item.id as typeof section)} title={collapsed ? item.label : undefined}>{item.icon}{!collapsed && <span>{item.label}</span>}</button>)}</nav><button className="back-store" onClick={onBack}><ArrowRight size={16} />{!collapsed && "Back to storefront"}</button></aside><main className="admin-main"><header className="admin-topbar"><div><span className="eyebrow">ADMINISTRATION</span><h1>{section === "overview" ? "Good to see you, " : ""}{section === "overview" ? (profile.display_name || "administrator") : sectionTitle(section)}</h1></div><div className="admin-topbar-actions"><span className="admin-user-badge"><span className="avatar">{initials(profile.display_name || profile.email || "A")}</span>{profile.email}</span><Button variant="ghost" onClick={loadAdmin} icon={<RefreshCw size={15} />}>Refresh</Button></div></header>{busy ? <div className="admin-loading"><RefreshCw className="spin" size={19} /><span>Loading workspace data</span></div> : <div className="admin-content">{section === "overview" && <AdminOverview listings={listings} orders={orders} invites={invites} onSection={setSection} />}{section === "listings" && <ListingsManager listings={listings} selected={selectedListing} onSelect={setSelectedListing} onSave={saveListing} onDelete={deleteListing} />}{section === "orders" && <OrdersManager orders={orders} listings={listings} onSave={saveOrder} />}{section === "invites" && <InvitesManager services={services} session={session} invites={invites} onRefresh={loadAdmin} onNotice={onNotice} />}{section === "settings" && <SettingsView services={services} session={session} profile={profile} embedded onBack={() => setSection("overview")} onSignedOut={signOut} onNotice={onNotice} />}</div>}</main></div>;
+  return <div className="admin-shell"><aside className={`admin-sidebar ${collapsed ? "collapsed" : ""}`}><div className="admin-sidebar-top"><BrandLockup compact={!collapsed} /><button onClick={() => setCollapsed((value) => !value)} className="collapse-button" aria-label="Toggle sidebar">{collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}</button></div><div className="admin-workspace-label">{!collapsed && <><span>WORKSPACE</span><strong>Deluxe Hub</strong></>}</div><nav className="admin-nav">{[{ id: "overview", label: "Overview", icon: <BarChart3 size={17} /> }, { id: "listings", label: "Listings", icon: <FileText size={17} /> }, { id: "orders", label: "Orders", icon: <PackageCheck size={17} /> }, { id: "invites", label: "Admin invites", icon: <Users size={17} /> }, { id: "payments", label: "Payments", icon: <CreditCard size={17} /> }, { id: "settings", label: "Account settings", icon: <Settings size={17} /> }].map((item) => <button key={item.id} className={section === item.id ? "active" : ""} onClick={() => setSection(item.id as typeof section)} title={collapsed ? item.label : undefined}>{item.icon}{!collapsed && <span>{item.label}</span>}</button>)}</nav><button className="back-store" onClick={onBack}><ArrowRight size={16} />{!collapsed && "Back to storefront"}</button></aside><main className="admin-main"><header className="admin-topbar"><div><span className="eyebrow">ADMINISTRATION</span><h1>{section === "overview" ? "Good to see you, " : ""}{section === "overview" ? (profile.display_name || "administrator") : sectionTitle(section)}</h1></div><div className="admin-topbar-actions"><span className="admin-user-badge"><span className="avatar">{initials(profile.display_name || profile.email || "A")}</span>{profile.email}</span><Button variant="ghost" onClick={loadAdmin} icon={<RefreshCw size={15} />}>Refresh</Button></div></header>{busy ? <div className="admin-loading"><RefreshCw className="spin" size={19} /><span>Loading workspace data</span></div> : <div className="admin-content">{section === "overview" && <AdminOverview listings={listings} orders={orders} invites={invites} onSection={setSection} />}{section === "listings" && <ListingsManager listings={listings} selected={selectedListing} onSelect={setSelectedListing} onSave={saveListing} onDelete={deleteListing} />}{section === "orders" && <OrdersManager orders={orders} listings={listings} onSave={saveOrder} />}{section === "invites" && <InvitesManager services={services} session={session} invites={invites} onRefresh={loadAdmin} onNotice={onNotice} />}{section === "payments" && <PaymentsSettings session={session} />}{section === "settings" && <SettingsView services={services} session={session} profile={profile} embedded onBack={() => setSection("overview")} onSignedOut={signOut} onNotice={onNotice} />}</div>}</main></div>;
 }
 
 function AdminOverview({ listings, orders, invites, onSection }: { listings: Listing[]; orders: Order[]; invites: AdminInvite[]; onSection: (section: "listings" | "orders" | "invites") => void }) {
@@ -407,7 +413,7 @@ function InvitesManager({ services, session, invites, onRefresh, onNotice }: { s
     if (error) onNotice({ kind: "error", text: error.message }); else { setEmail(""); onNotice({ kind: "success", text: "Admin invite created. Copy the link below to share it." }); onRefresh(); }
     setBusy(false);
   };
-  const copyInvite = async (token: string) => { const link = `${window.location.origin}/?invite=${token}`; await navigator.clipboard?.writeText(link); setCopied(token); window.setTimeout(() => setCopied(""), 1600); };
+  const copyInvite = async (token: string) => { const link = `${CANONICAL_SITE_URL}/?invite=${encodeURIComponent(token)}`; await navigator.clipboard?.writeText(link); setCopied(token); window.setTimeout(() => setCopied(""), 1600); };
   const revoke = async (id: string) => { if (!window.confirm("Revoke this admin invite?")) return; const { error } = await services.supabase.from("admin_invites").delete().eq("id", id); if (error) onNotice({ kind: "error", text: error.message }); else onRefresh(); };
   return <div className="admin-two-column invite-layout"><section className="admin-card"><div className="admin-card-heading"><div><span className="eyebrow">ACCESS CONTROL</span><h2>Create an invite</h2></div><KeyRound size={18} className="gold-icon" /></div><p className="admin-help">Invite links expire after seven days. The recipient can use one link to sign up or sign in, then redeem administrator access.</p><form onSubmit={createInvite}><Field label="Email restriction (optional)" value={email} onChange={setEmail} type="email" placeholder="Leave blank for a shareable link" /><Button type="submit" disabled={busy} className="full-width" icon={busy ? <RefreshCw className="spin" size={15} /> : <Link2 size={15} />}>{busy ? "Creating" : "Create invite link"}</Button></form></section><section className="admin-card"><div className="admin-card-heading"><div><span className="eyebrow">INVITE LOG</span><h2>Shareable links</h2></div><span className="muted-count">{invites.length}</span></div>{invites.length === 0 ? <EmptyAdmin text="No administrator invites yet." /> : <div className="invite-list">{invites.map((invite) => { const expired = new Date(invite.expires_at) < new Date(); return <div className="invite-row" key={invite.id}><div><strong>{invite.invited_email || "Open invite"}</strong><span>{invite.accepted_at ? "Accepted" : expired ? "Expired" : `Expires ${new Date(invite.expires_at).toLocaleDateString()}`}</span></div><div className="invite-actions">{!invite.accepted_at && !expired && <button className="copy-button" onClick={() => copyInvite(invite.token)}>{copied === invite.token ? <Check size={14} /> : <Copy size={14} />} {copied === invite.token ? "Copied" : "Copy link"}</button>}<button className="icon-action danger" onClick={() => revoke(invite.id)} aria-label="Revoke invite"><Trash2 size={14} /></button></div></div>; })}</div>}</section></div>;
 }
@@ -427,7 +433,7 @@ function SettingsView({ services, session, profile, onBack, onSignedOut, onNotic
   return <div className="settings-shell"><header className="settings-topbar"><a className="site-brand" href="#top"><BrandLockup compact /><span><strong>THEEYA’S</strong><small>DELUXE HUB</small></span></a><button className="signout-nav" onClick={onSignedOut}><LogOut size={16} /> Sign out</button></header>{content}</div>;
 }
 
-function sectionTitle(section: string) { return ({ listings: "Listings", orders: "Orders", invites: "Admin invites", settings: "Account settings" } as Record<string, string>)[section] || "Workspace"; }
+function sectionTitle(section: string) { return ({ listings: "Listings", orders: "Orders", invites: "Admin invites", payments: "Payments", settings: "Account settings" } as Record<string, string>)[section] || "Workspace"; }
 function initials(value: string) { return value.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase(); }
 function formatMoney(value: number, currency = "₦") { return `${currency}${Number(value || 0).toLocaleString("en-NG")}`; }
 

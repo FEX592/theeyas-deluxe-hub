@@ -3,7 +3,6 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 export type RuntimeConfig = {
   supabaseUrl: string;
   supabaseAnonKey: string;
-  paystackPublicKey: string;
 };
 
 export type AppServices = {
@@ -17,7 +16,6 @@ async function fetchRuntimeConfig(): Promise<RuntimeConfig> {
   const envConfig: RuntimeConfig = {
     supabaseUrl: import.meta.env.VITE_SUPABASE_URL ?? "",
     supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY ?? "",
-    paystackPublicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY ?? "",
   };
 
   try {
@@ -27,7 +25,6 @@ async function fetchRuntimeConfig(): Promise<RuntimeConfig> {
       return {
         supabaseUrl: remote.supabaseUrl || envConfig.supabaseUrl,
         supabaseAnonKey: remote.supabaseAnonKey || envConfig.supabaseAnonKey,
-        paystackPublicKey: remote.paystackPublicKey || envConfig.paystackPublicKey,
       };
     }
   } catch {
