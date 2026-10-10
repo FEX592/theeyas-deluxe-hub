@@ -1,31 +1,20 @@
-# THEEYA’S DELUXE HUB
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+</div>
 
-Professional marketplace for discovering and purchasing access to approved WhatsApp Groups and Channels.
+# Run and deploy your AI Studio app
 
-## Stack
+This contains everything you need to run your app locally.
 
-- React + Vite frontend
-- Supabase Auth, Postgres, and Row Level Security
-- Vercel serverless functions for payment processing and account operations
-- Provider registry and normalized payment service; Paystack is the only installed adapter currently
+View your app in AI Studio: https://ai.studio/apps/69269b65-db20-4e9a-94a0-0fb770de45c7
 
-## Commands
+## Run Locally
 
-```bash
-pnpm install
-pnpm dev
-pnpm check
-pnpm build:static
-```
+**Prerequisites:**  Node.js
 
-## Deployment
 
-Deploy this repository to Vercel. Vercel automatically detects the JavaScript functions in `api/`; no custom function runtime declaration is required. Add the server and browser-safe variables listed in [`DEPLOYMENT.md`](./DEPLOYMENT.md). For a new database, run [`supabase/schema.sql`](./supabase/schema.sql), then the payment migration. For the existing database that already has the base schema, apply only the migration in `supabase/migrations/` after reviewing it.
-
-Public browsing is available without an account. The initial administrator is created through the protected deployment bootstrap flow documented in [`BOOTSTRAP.md`](./BOOTSTRAP.md); normal signups are customers and later administrator accounts are created through invite links from the Admin workspace.
-
-The storefront uses dedicated customer routes for Home, Marketplace, listing details, checkout, and order tracking. Vercel SPA rewrites preserve direct navigation and refresh behavior.
-
-## Payments
-
-Checkout calls the generic `/api/payments/initialize` and `/api/payments/verify` routes. Provider-specific requests and webhook verification stay inside registered adapters. The Admin workspace’s **Payments** section stores credentials in Supabase Vault, requires a connection test before activation, and affects new checkouts only. The current code has a real Paystack adapter; other providers are not offered until their adapters are implemented. Successful payment moves an order to processing for admin review and does not automatically reveal access links.
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`
