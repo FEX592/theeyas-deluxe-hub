@@ -47,3 +47,20 @@ npm run dev
 ```
 
 The local Express/Vite development server listens on port 3000 by default. `npm run build` builds the static client; `npm run lint` runs the TypeScript compiler check.
+
+## Durable persistence fix (2026-10-10)
+
+The server-side store now uses the Supabase `tdh_app_state` table when both
+`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are configured. Writes are
+performed before the request continues, so Vercel instances no longer rely on
+ephemeral function storage. The table is RLS-enabled and direct access for
+`anon` and `authenticated` roles is revoked; only the server service role may
+read or write it.
+
+The local `.data/store.json` fallback remains available for local development
+only. It is disabled in production/Vercel when Supabase service-role
+configuration is missing, preventing silent loss of customer or order data.
+
+**Authentication is still a separate launch blocker:** the existing UI is an
+email-only simulation and must be migrated to Supabase Auth sessions before
+public customer/admin access or live payments are enabled.

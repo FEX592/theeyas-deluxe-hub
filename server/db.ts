@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import { execFileSync } from 'child_process';
 import {
   Profile,
   BootstrapState,
@@ -21,6 +22,31 @@ import {
 
 const DATA_DIR = path.resolve(process.cwd(), '.data');
 const DATA_FILE = path.join(DATA_DIR, 'store.json');
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const REMOTE_STATE_URL = SUPABASE_URL ? `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/tdh_app_state` : '';
+
+function remoteStateConfigured(): boolean {
+  return Boolean(REMOTE_STATE_URL && SUPABASE_SERVICE_ROLE_KEY);
+}
+
+function remoteRequest(method: 'GET' | 'POST', body?: unknown): any {
+  if (!remoteStateConfigured()) return null;
+  const args = ['-fsS', '--max-time', '8', '-X', method, `${REMOTE_STATE_URL}${method === 'GET' ? '?key=eq.store&select=state&limit=1' : ''}`,
+    '-H', `apikey: ${SUPABASE_SERVICE_ROLE_KEY}`,
+    '-H', `Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+    '-H', 'Content-Type: application/json'];
+  if (method === 'POST') {
+    args.push('-H', 'Prefer: resolution=merge-duplicates,return=minimal', '--data-binary', JSON.stringify(body));
+  }
+  try {
+    const output = execFileSync('curl', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+    return output ? JSON.parse(output) : null;
+  } catch (err) {
+    console.error('[Supabase] Durable state request failed:', err instanceof Error ? err.message : err);
+    return null;
+  }
+}
 
 interface StoreData {
   profiles: Profile[];
@@ -736,11 +762,16 @@ class Database {
   }
 
   private load(): StoreData {
-    try {
-      if (!fs.existsSync(DATA_DIR)) {
-        fs.mkdirSync(DATA_DIR, { recursive: true });
+    if (remoteStateConfigured()) {
+      const remote = remoteRequest('GET');
+      if (Array.isArray(remote) && remote[0]?.state) {
+        console.log('[Supabase] Loaded durable application state.');
+        return remote[0].state as StoreData;
       }
-      if (fs.existsSync(DATA_FILE)) {
+    }
+
+    try {
+      if (!remoteStateConfigured() && fs.existsSync(DATA_FILE)) {
         const raw = fs.readFileSync(DATA_FILE, 'utf-8');
         return JSON.parse(raw);
       }
@@ -804,13 +835,22 @@ class Database {
   }
 
   private save(data = this.data): void {
+    if (remoteStateConfigured()) {
+      const result = remoteRequest('POST', [{ key: 'store', state: data, updated_at: new Date().toISOString() }]);
+      if (result !== null) return;
+      throw new Error('Durable Supabase persistence failed; refusing to continue with ephemeral-only writes.');
+    }
+
+    if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+      throw new Error('Supabase service-role configuration is required in production. Local JSON fallback is disabled.');
+    }
+
     try {
-      if (!fs.existsSync(DATA_DIR)) {
-        fs.mkdirSync(DATA_DIR, { recursive: true });
-      }
+      if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
       fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
     } catch (err) {
       console.error('Failed to save store:', err);
+      throw err;
     }
   }
 

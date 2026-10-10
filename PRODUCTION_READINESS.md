@@ -58,3 +58,9 @@ The prepared Vercel source bundle includes a serverless Express adapter and the 
 - `npm run build` passed.
 - `npm run lint` (`tsc --noEmit`) passed.
 - Production Supabase advisor was rechecked after the migration. The mutable-search-path warning is cleared; the other findings above remain.
+
+## Follow-up implementation update
+
+The uploaded source now includes `supabase/migrations/20261010232500_add_durable_app_state.sql` and a Supabase-backed persistence adapter in `server/db.ts`. The connected database migration was applied successfully. Production/Vercel instances refuse to use the local JSON fallback when the service-role configuration is absent.
+
+This resolves the ephemeral local-disk persistence blocker for the current store model. It does not by itself complete the separate authentication blocker: the email-only login flow and client-supplied actor header still require migration to validated Supabase Auth sessions and server-side role checks.
