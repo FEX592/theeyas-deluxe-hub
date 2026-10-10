@@ -23,8 +23,9 @@ app.use(
 );
 app.use(express.urlencoded({ extended: true }));
 
-// Start outbox worker for background transactional email processing
-outboxWorker.start(10000);
+// Vercel Functions cannot host a durable interval worker. Run this worker only
+// in the standalone Node server; use a durable queue/cron before production.
+if (!process.env.VERCEL) outboxWorker.start(10000);
 
 // Helper for admin auth header or session simulation
 function getActorEmail(req: Request): string {
@@ -791,4 +792,6 @@ async function startServer() {
   });
 }
 
-startServer();
+if (!process.env.VERCEL) startServer();
+
+export default app;
