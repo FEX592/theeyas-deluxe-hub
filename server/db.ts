@@ -41,7 +41,7 @@ function remoteRequest(method: 'GET' | 'POST', body?: unknown): any {
   }
   try {
     const output = execFileSync('curl', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
-    return output ? JSON.parse(output) : null;
+    return output ? JSON.parse(output) : true;
   } catch (err) {
     console.error('[Supabase] Durable state request failed:', err instanceof Error ? err.message : err);
     return null;
