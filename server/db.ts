@@ -1321,6 +1321,17 @@ class Database {
     return newTx;
   }
 
+  markTransactionVerified(ref: string, providerReference?: string | null): PaymentTransaction | undefined {
+    const tx = this.getTransactionByReference(ref);
+    if (!tx) return undefined;
+    tx.status = 'paid';
+    tx.failure_reason = null;
+    tx.provider_reference = providerReference || tx.provider_reference;
+    tx.verified_at = tx.verified_at || new Date().toISOString();
+    this.save();
+    return tx;
+  }
+
   getTransactionByReference(ref: string): PaymentTransaction | undefined {
     return this.data.transactions.find((t) => t.reference === ref);
   }

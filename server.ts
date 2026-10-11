@@ -50,6 +50,7 @@ function getActorEmail(req: Request): string {
 
 function publicRequest(req: Request): boolean {
   if (req.path === '/api/health' || req.path === '/api/auth/login' || req.path === '/api/auth/signup' || req.path === '/api/auth/session' || req.path === '/api/auth/logout' || req.path === '/api/admin/bootstrap-status') return true;
+  if (req.method === 'POST' && req.path === '/api/payments/webhooks/paystack') return true;
   if (!req.path.startsWith('/api/')) return req.path === '/login' || req.path === '/signup' || req.path.startsWith('/assets/') || req.path.startsWith('/@') || req.path.includes('.');
   return false;
 }
@@ -375,14 +376,19 @@ app.get('/api/payments/verify', async (req: Request, res: Response) => {
     const verifyResult = await paystack.verifyTransaction(reference);
 
     if (verifyResult.status === 'success') {
+      if (verifyResult.reference !== reference || verifyResult.amount_kobo !== tx.amount_kobo || verifyResult.currency !== tx.currency) {
+        return res.status(409).json({ error: 'Paystack verification does not match the local transaction.' });
+      }
+      const wasPaid = db.getOrderById(tx.order_id)?.payment_status === 'paid';
       // Mark order paid, and auto-fulfill if automatic listing
       const { order, autoFulfilled } = db.markOrderPaid(tx.order_id, reference);
+      db.markTransactionVerified(reference, verifyResult.reference);
 
       // Enqueue payment confirmed receipt email
-      outboxWorker.enqueueOrderEvent('payment.confirmed', order);
+      if (!wasPaid) outboxWorker.enqueueOrderEvent('payment.confirmed', order);
 
       // If automatically fulfilled, enqueue access delivery email immediately
-      if (autoFulfilled) {
+      if (autoFulfilled && !wasPaid) {
         const fulfillment = db.getOrderFulfillment(order.id);
         outboxWorker.enqueueOrderEvent('order.completed', order, fulfillment);
       }
@@ -412,7 +418,10 @@ app.get('/api/payments/verify', async (req: Request, res: Response) => {
 });
 
 // Paystack Signed Webhook Handler
-app.post('/api/payments/webhooks/paystack', (req: any, res: Response) => {
+app.post('/api/payments/webhooks/paystack', async (req: any, res: Response) => {
+  if (process.env.VERCEL && !process.env.PAYSTACK_SECRET_KEY) {
+    return res.status(503).send('Paystack is not configured');
+  }
   const signature = req.headers['x-paystack-signature'] as string;
   const rawBody = req.rawBody || JSON.stringify(req.body);
 
@@ -424,12 +433,19 @@ app.post('/api/payments/webhooks/paystack', (req: any, res: Response) => {
   const event = req.body;
   if (event.event === 'charge.success') {
     const data = event.data;
-    const reference = data.reference;
+    const reference = typeof data?.reference === 'string' ? data.reference : '';
+    if (!reference) return res.status(400).send('Malformed Paystack event');
     const tx = db.getTransactionByReference(reference);
     if (tx) {
+      const verifyResult = await paystack.verifyTransaction(reference);
+      if (verifyResult.status !== 'success' || verifyResult.reference !== reference || verifyResult.amount_kobo !== tx.amount_kobo || verifyResult.currency !== tx.currency) {
+        return res.status(400).send('Payment verification mismatch');
+      }
+      const wasPaid = db.getOrderById(tx.order_id)?.payment_status === 'paid';
       const { order, autoFulfilled } = db.markOrderPaid(tx.order_id, reference);
-      outboxWorker.enqueueOrderEvent('payment.confirmed', order);
-      if (autoFulfilled) {
+      db.markTransactionVerified(reference, verifyResult.reference);
+      if (!wasPaid) outboxWorker.enqueueOrderEvent('payment.confirmed', order);
+      if (autoFulfilled && !wasPaid) {
         const fulfillment = db.getOrderFulfillment(order.id);
         outboxWorker.enqueueOrderEvent('order.completed', order, fulfillment);
       }
