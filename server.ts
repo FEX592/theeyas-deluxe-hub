@@ -105,8 +105,6 @@ app.get('/api/config', (_req: Request, res: Response) => {
   });
 });
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 // Public catalog-only live stream. The protected app-state row is reconciled on
 // the server; no orders, private links, sessions, or payment data are emitted.
 app.get('/api/realtime/catalog', (req: Request, res: Response) => {
@@ -143,10 +141,6 @@ app.get('/api/realtime/catalog', (req: Request, res: Response) => {
   res.on('close', close);
 });
 
-=======
->>>>>>> parent of e48e1e6 (Add live catalog synchronization)
-=======
->>>>>>> parent of e48e1e6 (Add live catalog synchronization)
 // 2. First-party account authentication
 app.get('/api/auth/session', (req: AuthenticatedRequest, res: Response) => {
   if (!isAuthConfigured()) {
