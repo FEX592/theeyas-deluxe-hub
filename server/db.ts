@@ -823,7 +823,7 @@ class Database {
         support_email: 'support@theeyasdeluxehub.com',
         support_whatsapp: '+2348000000000',
         currency: 'NGN',
-        canonical_url: process.env.APP_URL || 'https://theeyasdeluxehub.com',
+        canonical_url: process.env.APP_URL || 'https://theeyadeluxehub.vercel.app',
         brevo_sender_email: process.env.BREVO_SENDER_EMAIL || 'notifications@theeyasdeluxehub.com',
         brevo_sender_name: process.env.BREVO_SENDER_NAME || "Theeya's Deluxe Hub",
         brevo_reply_to: process.env.BREVO_REPLY_TO || 'support@theeyasdeluxehub.com',
@@ -1511,7 +1511,7 @@ class Database {
 
   // --- Store Settings ---
   getSettings(): StoreSettings {
-    return this.data.settings;
+    return process.env.APP_URL ? { ...this.data.settings, canonical_url: process.env.APP_URL } : this.data.settings;
   }
 
   updateSettings(updates: Partial<StoreSettings>, actorEmail: string): StoreSettings {

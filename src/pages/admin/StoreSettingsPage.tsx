@@ -9,7 +9,7 @@ export const StoreSettingsPage: React.FC = () => {
   const [storeName, setStoreName] = useState("Theeya's Deluxe Hub");
   const [supportEmail, setSupportEmail] = useState('support@theeyasdeluxehub.com');
   const [supportWhatsapp, setSupportWhatsapp] = useState('+234 800 000 0000');
-  const [canonicalUrl, setCanonicalUrl] = useState('https://theeyasdeluxehub.com');
+  const [canonicalUrl, setCanonicalUrl] = useState('https://theeyadeluxehub.vercel.app');
 
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
