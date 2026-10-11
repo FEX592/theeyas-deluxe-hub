@@ -1,7 +1,0 @@
-{
-  "name": "Theeya's Deluxe Hub",
-  "description": "A curated marketplace for discovering and purchasing access to exclusive WhatsApp Groups and Channels.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
-
