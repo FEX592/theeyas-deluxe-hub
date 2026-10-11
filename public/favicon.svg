@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Rounded plum square as shown in Brand Board app icon -->
+  <rect width="64" height="64" rx="16" fill="#3D183F"/>
+  <g transform="translate(6, 6) scale(0.52)">
+    <!-- Crown -->
+    <path d="M30 4 L34 11 L39 4 L44 11 L48 4 L47 14 H31 Z" fill="#D6B36A"/>
+    <!-- T bar -->
+    <path d="M0 16 H44 V26 H26 V56 H14 V26 H0 Z" fill="#FCFAF6"/>
+    <!-- D -->
+    <path d="M22 16 H44 C56 16 64 24 64 36 C64 48 56 56 44 56 H22 Z" fill="#FCFAF6"/>
+    <!-- Chat bubble inside D -->
+    <path d="M30 26 H42 C46 26 49 29 49 33 C49 37 46 40 42 40 H36 L32 44 V40 H30 C28 40 27 38 27 36 V30 C27 28 28 26 30 26 Z" fill="#3D183F"/>
+    <circle cx="34" cy="33" r="1.5" fill="#D6B36A"/>
+    <circle cx="38" cy="33" r="1.5" fill="#D6B36A"/>
+    <circle cx="42" cy="33" r="1.5" fill="#D6B36A"/>
+    <!-- Gold ribbon -->
+    <path d="M48 37 C54 36 58 32 66 31 C72 30 76 33 80 34 L78 28 C74 27 70 25 64 26 C56 27 52 32 46 33 Z" fill="#D6B36A"/>
+    <!-- H -->
+    <path d="M72 16 H84 V31 H94 V16 H106 V56 H94 V41 H84 V56 H72 Z" fill="#FCFAF6"/>
+  </g>
+</svg>
