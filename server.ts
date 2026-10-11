@@ -115,6 +115,7 @@ app.get('/api/realtime/catalog', (req: Request, res: Response) => {
   });
   res.flushHeaders?.();
   let version = db.getPublicCatalogVersion();
+  console.info('[Realtime] Catalog stream opened:', { version });
   res.write(`event: ready\ndata: ${JSON.stringify({ version })}\n\n`);
   const heartbeat = setInterval(() => res.write(': heartbeat\n\n'), 15000);
   const reconcile = setInterval(() => {
@@ -123,6 +124,7 @@ app.get('/api/realtime/catalog', (req: Request, res: Response) => {
       const nextVersion = db.getPublicCatalogVersion();
       if (nextVersion !== version) {
         version = nextVersion;
+        console.info('[Realtime] Catalog change detected:', { version });
         res.write(`event: catalog_changed\ndata: ${JSON.stringify({ version })}\n\n`);
       }
     } catch (error) {
@@ -132,6 +134,7 @@ app.get('/api/realtime/catalog', (req: Request, res: Response) => {
   const close = () => {
     clearInterval(heartbeat);
     clearInterval(reconcile);
+    console.info('[Realtime] Catalog stream closed.');
   };
   req.on('close', close);
   res.on('close', close);
@@ -192,6 +195,7 @@ app.get('/api/admin/bootstrap-status', (_req: Request, res: Response) => {
 
 // 3. Categories (Public & Admin)
 app.get('/api/categories', (_req: Request, res: Response) => {
+  res.set('Cache-Control', 'no-store, max-age=0');
   res.json(db.getCategories().filter((c) => c.active));
 });
 
@@ -222,10 +226,12 @@ app.delete('/api/admin/categories/:id', (req: Request, res: Response) => {
 // 4. Listings
 // Public listings (CRITICAL: NEVER exposes private_links)
 app.get('/api/listings', (_req: Request, res: Response) => {
+  res.set('Cache-Control', 'no-store, max-age=0');
   res.json(db.getPublicListings());
 });
 
 app.get('/api/listings/:idOrSlug', (req: Request, res: Response) => {
+  res.set('Cache-Control', 'no-store, max-age=0');
   const param = req.params.idOrSlug;
   const listing = db.getListingBySlug(param) || db.getListingById(param);
   if (!listing || listing.status !== 'published') {

@@ -6,7 +6,7 @@ import {
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   const headers = new Headers(options?.headers);
   if (!headers.has('Content-Type') && options?.method && options.method !== 'GET') headers.set('Content-Type', 'application/json');
-  const response = await fetch(url, { ...options, headers, credentials: 'same-origin' });
+  const response = await fetch(url, { ...options, headers, credentials: 'same-origin', ...(options?.method && options.method !== 'GET' ? {} : { cache: 'no-store' }) });
   if (!response.ok) {
     let errorMsg = `Request failed: ${response.statusText}`;
     try { const errData = await response.json(); errorMsg = errData.error || errData.message || errorMsg; } catch {}

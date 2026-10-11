@@ -32,10 +32,13 @@ function remoteStateConfigured(): boolean {
 
 function remoteRequest(method: 'GET' | 'POST', body?: unknown): any {
   if (!remoteStateConfigured()) return null;
-  const args = ['-fsS', '--max-time', '8', '-X', method, `${REMOTE_STATE_URL}${method === 'GET' ? '?key=eq.store&select=state&limit=1' : ''}`,
+  const readUrl = `${REMOTE_STATE_URL}?key=eq.store&select=state,updated_at&limit=1&_sync=${Date.now()}`;
+  const args = ['-fsS', '--max-time', '8', '-X', method, method === 'GET' ? readUrl : REMOTE_STATE_URL,
     '-H', `apikey: ${SUPABASE_SERVICE_ROLE_KEY}`,
     '-H', `Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-    '-H', 'Content-Type: application/json'];
+    '-H', 'Content-Type: application/json',
+    '-H', 'Cache-Control: no-cache',
+    '-H', 'Pragma: no-cache'];
   if (method === 'POST') {
     args.push('-H', 'Prefer: resolution=merge-duplicates,return=minimal', '--data-binary', JSON.stringify(body));
   }
@@ -835,12 +838,23 @@ class Database {
   }
 
   refreshFromRemote(): boolean {
-    if (!remoteStateConfigured()) return false;
+    if (!remoteStateConfigured()) {
+      console.warn('[Realtime] Durable state is not configured; catalog cannot reconcile.');
+      return false;
+    }
     const remote = remoteRequest('GET');
-    if (!Array.isArray(remote) || !remote[0]?.state) return false;
+    if (!Array.isArray(remote) || !remote[0]?.state) {
+      console.warn('[Realtime] Durable state read returned no store row.');
+      return false;
+    }
     const next = remote[0].state as StoreData;
     const changed = JSON.stringify(this.data) !== JSON.stringify(next);
     if (changed) this.data = next;
+    console.info('[Realtime] Catalog reconciliation completed:', {
+      changed,
+      remoteUpdatedAt: remote[0].updated_at || null,
+      version: this.getPublicCatalogVersion(),
+    });
     return changed;
   }
 
