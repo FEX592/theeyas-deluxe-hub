@@ -28,7 +28,6 @@ export const AdminInvitePage: React.FC = () => {
     try {
       const res = await api.redeemInvite(token, email.trim(), displayName.trim());
       if (res.success) {
-        localStorage.setItem('tdh_user', JSON.stringify(res.profile));
         await refresh();
         navigate('/admin');
       }

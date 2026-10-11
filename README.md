@@ -64,3 +64,18 @@ configuration is missing, preventing silent loss of customer or order data.
 **Authentication is still a separate launch blocker:** the existing UI is an
 email-only simulation and must be migrated to Supabase Auth sessions before
 public customer/admin access or live payments are enabled.
+
+## First-party authentication (2026-10-11)
+
+The site now uses its own server-side authentication system; it does not use a third-party auth provider.
+
+- Passwords are hashed with Node.js `scrypt` and never stored in plaintext.
+- Sessions are random, hashed tokens stored in `tdh_auth_sessions` and sent as `HttpOnly` cookies.
+- `tdh_auth_users` stores the account email, display name, role, and password hash.
+- The first account created when no `owner` or `admin` exists becomes the store owner and receives admin-panel access.
+- All later signups are customer accounts.
+- All non-auth pages redirect to `/login` when no session exists.
+- All non-auth API endpoints return `401` without a valid session.
+- Admin APIs additionally require an `admin` or `owner` session role.
+
+The linked Vercel-Supabase integration supplies the server-only `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` variables automatically. No API keys need to be copied or pasted manually. Keep the service-role key server-only and never expose it through a `VITE_*` variable. Apply the included `add_first_party_auth` migration before the first signup; it has already been applied to the connected Supabase project used during this build.

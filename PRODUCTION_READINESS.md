@@ -64,3 +64,9 @@ The prepared Vercel source bundle includes a serverless Express adapter and the 
 The uploaded source now includes `supabase/migrations/20261010232500_add_durable_app_state.sql` and a Supabase-backed persistence adapter in `server/db.ts`. The connected database migration was applied successfully. Production/Vercel instances refuse to use the local JSON fallback when the service-role configuration is absent.
 
 This resolves the ephemeral local-disk persistence blocker for the current store model. It does not by itself complete the separate authentication blocker: the email-only login flow and client-supplied actor header still require migration to validated Supabase Auth sessions and server-side role checks.
+
+## Authentication implementation update
+
+The custom first-party auth system is now implemented and the `add_first_party_auth` migration is applied to Supabase. The server uses scrypt password hashes and HttpOnly database-backed sessions. The first account is assigned the owner role when no admin/owner account exists; subsequent accounts are customers. The browser route guard and server API middleware both fail closed without a session, and admin APIs require an owner/admin role.
+
+The linked Vercel-Supabase integration already provides `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` as server-only production variables. No manual key entry is required; verify the integration remains connected before signup is enabled.

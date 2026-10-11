@@ -36,6 +36,20 @@ import { AuditLogPage } from './pages/admin/AuditLogPage.tsx';
 import { StoreSettingsPage } from './pages/admin/StoreSettingsPage.tsx';
 
 // Guard for Admin Pages
+const AuthRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { profile, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0A0D14] text-[#9CA3AF] text-xs font-mono">
+        Checking your account...
+      </div>
+    );
+  }
+
+  return profile ? <>{children}</> : <Navigate to="/login" replace />;
+};
+
 const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { profile, isLoading, isAdmin, bootstrapState } = useAuth();
 
@@ -86,19 +100,19 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           {/* Customer Routes */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/marketplace" element={<MarketplacePage />} />
-          <Route path="/marketplace/:slug" element={<ListingDetailPage />} />
-          <Route path="/checkout/:listingId" element={<CheckoutPage />} />
-          <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />
-          <Route path="/track-order" element={<TrackOrderPage />} />
-          <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+          <Route path="/" element={<AuthRoute><HomePage /></AuthRoute>} />
+          <Route path="/marketplace" element={<AuthRoute><MarketplacePage /></AuthRoute>} />
+          <Route path="/marketplace/:slug" element={<AuthRoute><ListingDetailPage /></AuthRoute>} />
+          <Route path="/checkout/:listingId" element={<AuthRoute><CheckoutPage /></AuthRoute>} />
+          <Route path="/order-confirmation/:orderId" element={<AuthRoute><OrderConfirmationPage /></AuthRoute>} />
+          <Route path="/track-order" element={<AuthRoute><TrackOrderPage /></AuthRoute>} />
+          <Route path="/orders/:orderId" element={<AuthRoute><OrderDetailPage /></AuthRoute>} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route path="/account" element={<AccountPage />} />
-          <Route path="/account/security" element={<AccountSecurityPage />} />
-          <Route path="/setup/owner" element={<SetupOwnerPage />} />
-          <Route path="/admin/invite/:token" element={<AdminInvitePage />} />
+          <Route path="/account" element={<AuthRoute><AccountPage /></AuthRoute>} />
+          <Route path="/account/security" element={<AuthRoute><AccountSecurityPage /></AuthRoute>} />
+          <Route path="/setup/owner" element={<AuthRoute><SetupOwnerPage /></AuthRoute>} />
+          <Route path="/admin/invite/:token" element={<AuthRoute><AdminInvitePage /></AuthRoute>} />
 
           {/* Admin Routes */}
           <Route

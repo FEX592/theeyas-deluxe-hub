@@ -8,20 +8,17 @@ interface AuthContextType {
   isLoading: boolean;
   isAdmin: boolean;
   isOwner: boolean;
-  login: (email: string) => Promise<void>;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<Profile>;
+  signup: (email: string, displayName: string, password: string) => Promise<{ profile: Profile; firstAccount: boolean }>;
+  logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
-  profile: null,
-  bootstrapState: null,
-  isLoading: true,
-  isAdmin: false,
-  isOwner: false,
-  login: async () => {},
-  logout: () => {},
-  refresh: async () => {},
+  profile: null, bootstrapState: null, isLoading: true, isAdmin: false, isOwner: false,
+  login: async () => { throw new Error('Authentication is not ready.'); },
+  signup: async () => { throw new Error('Authentication is not ready.'); },
+  logout: async () => {}, refresh: async () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -31,73 +28,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refresh = async () => {
     try {
-      const bStatus = await api.getBootstrapStatus();
+      const [bStatus, session] = await Promise.all([api.getBootstrapStatus(), api.getMe()]);
       setBootstrapState(bStatus);
-
-      const storedUser = localStorage.getItem('tdh_user');
-      if (storedUser) {
-        const parsed = JSON.parse(storedUser);
-        const me = await api.getMe(parsed.email);
-        if (me.profile) {
-          setProfile(me.profile);
-          localStorage.setItem('tdh_user', JSON.stringify(me.profile));
-        } else {
-          setProfile(null);
-          localStorage.removeItem('tdh_user');
-        }
-      } else {
-        // If not logged in, but owner is claimed, check if there is an owner profile
-        const me = await api.getMe();
-        if (me.profile && (me.profile.role === 'owner' || me.profile.role === 'admin')) {
-          setProfile(me.profile);
-          localStorage.setItem('tdh_user', JSON.stringify(me.profile));
-        } else {
-          setProfile(null);
-        }
-      }
+      setProfile(session.profile || null);
     } catch (err) {
-      console.error('Failed to load auth status:', err);
+      console.error('Failed to load authentication state:', err);
+      setProfile(null);
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    refresh();
-  }, []);
+  useEffect(() => { refresh(); }, []);
 
-  const login = async (email: string) => {
-    const res = await api.login(email);
-    if (res.profile) {
-      setProfile(res.profile);
-      localStorage.setItem('tdh_user', JSON.stringify(res.profile));
-    }
+  const login = async (email: string, password: string) => {
+    const res = await api.login(email, password);
+    setProfile(res.profile);
+    return res.profile;
   };
 
-  const logout = () => {
+  const signup = async (email: string, displayName: string, password: string) => {
+    const res = await api.signup(email, displayName, password);
+    setProfile(res.profile);
+    await refresh();
+    return { profile: res.profile, firstAccount: res.first_account };
+  };
+
+  const logout = async () => {
+    await api.logout();
     setProfile(null);
-    localStorage.removeItem('tdh_user');
   };
 
   const isAdmin = profile?.role === 'admin' || profile?.role === 'owner';
   const isOwner = profile?.role === 'owner';
 
-  return (
-    <AuthContext.Provider
-      value={{
-        profile,
-        bootstrapState,
-        isLoading,
-        isAdmin,
-        isOwner,
-        login,
-        logout,
-        refresh,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ profile, bootstrapState, isLoading, isAdmin, isOwner, login, signup, logout, refresh }}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => useContext(AuthContext);

@@ -7,6 +7,8 @@ import { db } from './server/db.ts';
 import { paystack } from './server/paystack.ts';
 import { brevo, renderTemplate } from './server/brevo.ts';
 import { outboxWorker } from './server/outbox-worker.ts';
+import { authenticate, createAccount, createSession, destroySession, getSession, hasAdminAccount, isAuthConfigured } from './server/auth.ts';
+import type { Profile } from './server/types.ts';
 
 dotenv.config();
 
@@ -27,17 +29,46 @@ app.use(express.urlencoded({ extended: true }));
 // in the standalone Node server; use a durable queue/cron before production.
 if (!process.env.VERCEL) outboxWorker.start(10000);
 
-// Helper for admin auth header or session simulation
-function getActorEmail(req: Request): string {
-  const custom = req.headers['x-actor-email'] as string;
-  if (custom) return custom;
-  const bootstrap = db.getBootstrapState();
-  if (bootstrap.owner_id) {
-    const owner = db.getProfileById(bootstrap.owner_id);
-    if (owner) return owner.email;
-  }
-  return 'admin@theeyasdeluxehub.com';
+// First-party session authentication. No client-supplied identity headers are trusted.
+type AuthenticatedRequest = Request & { authUser?: Profile };
+function sessionCookie(req: Request): string | undefined {
+  const raw = req.headers.cookie || '';
+  return raw.split(';').map((part) => part.trim()).find((part) => part.startsWith('tdh_session='))?.slice('tdh_session='.length);
 }
+function currentUser(req: Request): Profile | null {
+  try { return getSession(sessionCookie(req)); } catch { return null; }
+}
+function setSessionCookie(res: Response, token: string, expiresAt: string): void {
+  const secure = process.env.VERCEL ? '; Secure' : '';
+  res.setHeader('Set-Cookie', `tdh_session=${token}; Path=/; HttpOnly; SameSite=Lax; Expires=${new Date(expiresAt).toUTCString()}${secure}`);
+}
+function clearSessionCookie(res: Response): void {
+  res.setHeader('Set-Cookie', 'tdh_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
+}
+function getActorEmail(req: Request): string {
+  return (req as AuthenticatedRequest).authUser?.email || '';
+}
+
+function publicRequest(req: Request): boolean {
+  if (req.path === '/api/health' || req.path === '/api/auth/login' || req.path === '/api/auth/signup' || req.path === '/api/auth/session' || req.path === '/api/auth/logout' || req.path === '/api/admin/bootstrap-status') return true;
+  if (!req.path.startsWith('/api/')) return req.path === '/login' || req.path === '/signup' || req.path.startsWith('/assets/') || req.path.startsWith('/@') || req.path.includes('.');
+  return false;
+}
+
+// Every API except auth/health requires a valid server session. Admin APIs also require admin role.
+app.use((req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  if (publicRequest(req)) return next();
+  const user = currentUser(req);
+  if (!user) {
+    if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'Authentication required.' });
+    return res.redirect(`/login?next=${encodeURIComponent(req.originalUrl)}`);
+  }
+  req.authUser = user;
+  if (req.path.startsWith('/api/admin/') && user.role !== 'admin' && user.role !== 'owner') {
+    return res.status(403).json({ error: 'Administrator access required.' });
+  }
+  next();
+});
 
 // ==========================================
 // API ROUTES
@@ -55,6 +86,8 @@ app.get('/api/health', (_req: Request, res: Response) => {
     paystack_configured: !!process.env.PAYSTACK_SECRET_KEY,
     outbox_pending_jobs: pending,
     bootstrap_claimed: db.getBootstrapState().claimed,
+    auth_configured: isAuthConfigured(),
+    has_admin_account: isAuthConfigured() ? hasAdminAccount() : false,
   });
 });
 
@@ -71,81 +104,57 @@ app.get('/api/config', (_req: Request, res: Response) => {
   });
 });
 
-// 2. Owner Bootstrap & Auth
-app.get('/api/admin/bootstrap-status', (_req: Request, res: Response) => {
-  res.json(db.getBootstrapState());
-});
-
-app.post('/api/admin/bootstrap', (req: Request, res: Response) => {
-  try {
-    const { email, displayName, secret } = req.body;
-    if (!email) {
-      return res.status(400).json({ error: 'Owner email address is required' });
-    }
-
-    // Optional environment secret verification if configured
-    const expectedSecret = process.env.TDH_OWNER_BOOTSTRAP_SECRET;
-    if (expectedSecret && secret !== expectedSecret) {
-      return res.status(403).json({ error: 'Invalid owner bootstrap secret' });
-    }
-
-    const profile = db.claimBootstrap(email, displayName || 'Store Owner');
-    res.json({ success: true, profile });
-  } catch (err: any) {
-    res.status(400).json({ error: err.message });
+// 2. First-party account authentication
+app.get('/api/auth/session', (req: AuthenticatedRequest, res: Response) => {
+  if (!isAuthConfigured()) {
+    return res.status(503).json({ error: 'Authentication is not configured on this deployment.', authenticated: false, has_admin: false });
   }
+  const profile = currentUser(req);
+  res.json({ profile, authenticated: Boolean(profile), auth_configured: isAuthConfigured(), has_admin: hasAdminAccount() });
 });
 
 app.post('/api/auth/login', (req: Request, res: Response) => {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ error: 'Email required' });
-
-  let profile = db.getProfileByEmail(email);
-  if (!profile) {
-    // If bootstrap not claimed yet, suggest bootstrap
-    const bState = db.getBootstrapState();
-    if (!bState.claimed) {
-      return res.status(400).json({ error: 'Initial owner bootstrap has not been completed. Go to /setup/owner' });
-    }
-    // Create customer profile
-    profile = db.createOrUpdateCustomer(email, email.split('@')[0]);
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
+    const session = createSession(email, password);
+    setSessionCookie(res, session.token, session.expiresAt);
+    res.json({ success: true, profile: session.profile });
+  } catch (err: any) {
+    res.status(401).json({ error: err.message || 'Invalid email or password.' });
   }
-
-  res.json({ success: true, profile });
 });
 
 app.post('/api/auth/signup', (req: Request, res: Response) => {
-  const { email, displayName } = req.body;
-  if (!email) return res.status(400).json({ error: 'Email required' });
-
-  const bState = db.getBootstrapState();
-  if (!bState.claimed) {
-    return res.status(403).json({ error: 'Registration is closed until owner setup is complete.' });
+  try {
+    const { email, displayName, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email, display name, and password are required.' });
+    const firstAccount = !hasAdminAccount();
+    const role = firstAccount ? 'owner' : 'customer';
+    const created = createAccount(email, displayName || '', password, role);
+    let profile = created;
+    if (firstAccount) {
+      const bootstrap = db.getBootstrapState();
+      if (!bootstrap.claimed) profile = db.claimBootstrap(created.email, created.display_name);
+    } else {
+      profile = db.createOrUpdateCustomer(created.email, created.display_name);
+    }
+    const session = createSession(email, password);
+    setSessionCookie(res, session.token, session.expiresAt);
+    res.status(201).json({ success: true, first_account: firstAccount, profile });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || 'Registration failed.' });
   }
-
-  const existing = db.getProfileByEmail(email);
-  if (existing) {
-    return res.json({ success: true, profile: existing });
-  }
-
-  const profile = db.createOrUpdateCustomer(email, displayName || email.split('@')[0]);
-  res.json({ success: true, profile });
 });
 
-app.get('/api/auth/me', (req: Request, res: Response) => {
-  const email = (req.query.email as string) || (req.headers['x-actor-email'] as string);
-  if (!email) {
-    // If no email, check if owner exists
-    const bState = db.getBootstrapState();
-    if (bState.owner_id) {
-      const owner = db.getProfileById(bState.owner_id);
-      return res.json({ profile: owner });
-    }
-    return res.json({ profile: null });
-  }
+app.post('/api/auth/logout', (req: Request, res: Response) => {
+  try { destroySession(sessionCookie(req)); } finally { clearSessionCookie(res); }
+  res.json({ success: true });
+});
 
-  const profile = db.getProfileByEmail(email);
-  res.json({ profile: profile || null });
+// Kept for the existing setup screen; it reports status but cannot claim an owner outside signup.
+app.get('/api/admin/bootstrap-status', (_req: Request, res: Response) => {
+  res.json(db.getBootstrapState());
 });
 
 // 3. Categories (Public & Admin)
