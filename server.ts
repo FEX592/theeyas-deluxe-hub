@@ -49,7 +49,7 @@ function getActorEmail(req: Request): string {
 }
 
 function publicRequest(req: Request): boolean {
-  if (req.path === '/api/health' || req.path === '/api/auth/login' || req.path === '/api/auth/signup' || req.path === '/api/auth/session' || req.path === '/api/auth/logout' || req.path === '/api/admin/bootstrap-status') return true;
+  if (req.path === '/api/health' || req.path === '/api/auth/login' || req.path === '/api/auth/signup' || req.path === '/api/auth/session' || req.path === '/api/auth/logout' || req.path === '/api/admin/bootstrap-status' || req.path === '/api/realtime/catalog') return true;
   if (req.method === 'POST' && req.path === '/api/payments/webhooks/paystack') return true;
   if (req.method === 'GET' && (req.path === '/api/categories' || req.path === '/api/listings' || req.path.startsWith('/api/listings/'))) return true;
   if (!req.path.startsWith('/api/')) return req.path === '/login' || req.path === '/signup' || req.path.startsWith('/assets/') || req.path.startsWith('/@') || req.path.includes('.');
