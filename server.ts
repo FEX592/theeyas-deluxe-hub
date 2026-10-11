@@ -49,7 +49,7 @@ function getActorEmail(req: Request): string {
 }
 
 function publicRequest(req: Request): boolean {
-  if (req.path === '/api/health' || req.path === '/api/auth/login' || req.path === '/api/auth/signup' || req.path === '/api/auth/session' || req.path === '/api/auth/logout' || req.path === '/api/admin/bootstrap-status') return true;
+  if (req.path === '/api/health' || req.path === '/api/auth/login' || req.path === '/api/auth/signup' || req.path === '/api/auth/session' || req.path === '/api/auth/logout' || req.path === '/api/admin/bootstrap-status' || req.path === '/api/realtime/catalog') return true;
   if (req.method === 'POST' && req.path === '/api/payments/webhooks/paystack') return true;
   if (!req.path.startsWith('/api/')) return req.path === '/login' || req.path === '/signup' || req.path.startsWith('/assets/') || req.path.startsWith('/@') || req.path.includes('.');
   return false;
@@ -102,6 +102,39 @@ app.get('/api/config', (_req: Request, res: Response) => {
     paystack_environment: provider.environment,
     bootstrap_claimed: db.getBootstrapState().claimed,
   });
+});
+
+// Public catalog-only live stream. The protected app-state row is reconciled on
+// the server; no orders, private links, sessions, or payment data are emitted.
+app.get('/api/realtime/catalog', (req: Request, res: Response) => {
+  res.status(200).set({
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+  res.flushHeaders?.();
+  let version = db.getPublicCatalogVersion();
+  res.write(`event: ready\ndata: ${JSON.stringify({ version })}\n\n`);
+  const heartbeat = setInterval(() => res.write(': heartbeat\n\n'), 15000);
+  const reconcile = setInterval(() => {
+    try {
+      db.refreshFromRemote();
+      const nextVersion = db.getPublicCatalogVersion();
+      if (nextVersion !== version) {
+        version = nextVersion;
+        res.write(`event: catalog_changed\ndata: ${JSON.stringify({ version })}\n\n`);
+      }
+    } catch (error) {
+      console.warn('[Realtime] Catalog reconciliation failed:', error instanceof Error ? error.message : error);
+    }
+  }, 4000);
+  const close = () => {
+    clearInterval(heartbeat);
+    clearInterval(reconcile);
+  };
+  req.on('close', close);
+  res.on('close', close);
 });
 
 // 2. First-party account authentication

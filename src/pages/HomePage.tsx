@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api.ts';
 import { Listing, Category } from '../types.ts';
 import { Header } from '../components/Header.tsx';
 import { Footer } from '../components/Footer.tsx';
 import { ListingCard } from '../components/ListingCard.tsx';
+import { useCatalogRealtime } from '../lib/catalogRealtime.ts';
 import { ArrowRight, ShieldCheck, MessageSquare, CheckCircle, Search } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
@@ -12,7 +13,7 @@ export const HomePage: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const loadData = useCallback(() => {
     Promise.all([api.getPublicListings(), api.getCategories()])
       .then(([allListings, allCats]) => {
         setListings(allListings);
@@ -21,6 +22,12 @@ export const HomePage: React.FC = () => {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  useCatalogRealtime(loadData);
 
   const featuredListings = listings.filter((l) => l.featured).slice(0, 3);
   const recentListings = listings.slice(0, 6);

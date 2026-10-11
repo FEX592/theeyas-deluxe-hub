@@ -834,6 +834,23 @@ class Database {
     return initial;
   }
 
+  refreshFromRemote(): boolean {
+    if (!remoteStateConfigured()) return false;
+    const remote = remoteRequest('GET');
+    if (!Array.isArray(remote) || !remote[0]?.state) return false;
+    const next = remote[0].state as StoreData;
+    const changed = JSON.stringify(this.data) !== JSON.stringify(next);
+    if (changed) this.data = next;
+    return changed;
+  }
+
+  getPublicCatalogVersion(): string {
+    return crypto.createHash('sha256').update(JSON.stringify({
+      listings: this.getPublicListings(),
+      categories: this.getCategories().filter((category) => category.active),
+    })).digest('hex');
+  }
+
   private save(data = this.data): void {
     if (remoteStateConfigured()) {
       const result = remoteRequest('POST', [{ key: 'store', state: data, updated_at: new Date().toISOString() }]);

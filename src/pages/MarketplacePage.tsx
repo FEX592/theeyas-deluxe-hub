@@ -1,10 +1,11 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api.ts';
 import { Listing, Category, ListingType } from '../types.ts';
 import { Header } from '../components/Header.tsx';
 import { Footer } from '../components/Footer.tsx';
 import { ListingCard } from '../components/ListingCard.tsx';
+import { useCatalogRealtime } from '../lib/catalogRealtime.ts';
 import { Search, X, RotateCcw } from 'lucide-react';
 
 export const MarketplacePage: React.FC = () => {
@@ -19,7 +20,7 @@ export const MarketplacePage: React.FC = () => {
   const selectedCategory = searchParams.get('category') || 'all';
   const sortBy = searchParams.get('sort') || 'newest';
 
-  const loadData = () => {
+  const loadData = useCallback(() => {
     setLoading(true);
     setError(null);
     Promise.all([api.getPublicListings(), api.getCategories()])
@@ -31,11 +32,13 @@ export const MarketplacePage: React.FC = () => {
         setError(err.message || 'Failed to load marketplace listings.');
       })
       .finally(() => setLoading(false));
-  };
+  }, []);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
+
+  useCatalogRealtime(loadData);
 
   const updateParam = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams);
