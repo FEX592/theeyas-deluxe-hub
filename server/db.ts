@@ -32,7 +32,7 @@ function remoteStateConfigured(): boolean {
 
 function remoteRequest(method: 'GET' | 'POST', body?: unknown): any {
   if (!remoteStateConfigured()) return null;
-  const readUrl = `${REMOTE_STATE_URL}?key=eq.store&select=state,updated_at&limit=1&_sync=${Date.now()}`;
+  const readUrl = `${REMOTE_STATE_URL}?key=eq.store&updated_at=gte.1970-01-01T00%3A00%3A00Z&select=state,updated_at&limit=1&order=updated_at.desc`;
   const args = ['-fsS', '--max-time', '8', '-X', method, method === 'GET' ? readUrl : REMOTE_STATE_URL,
     '-H', `apikey: ${SUPABASE_SERVICE_ROLE_KEY}`,
     '-H', `Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
