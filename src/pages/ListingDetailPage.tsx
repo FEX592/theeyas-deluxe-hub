@@ -1,10 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api.ts';
 import { Listing, Category } from '../types.ts';
 import { Header } from '../components/Header.tsx';
 import { Footer } from '../components/Footer.tsx';
-import { useCatalogRealtime } from '../lib/catalogRealtime.ts';
 import {
   ArrowLeft,
   ShieldCheck,
@@ -22,10 +21,10 @@ export const ListingDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadListing = useCallback(() => {
-    if (!slug) return Promise.resolve();
+  useEffect(() => {
+    if (!slug) return;
     setLoading(true);
-    return api
+    api
       .getListing(slug)
       .then(async (l) => {
         setListing(l);
@@ -40,12 +39,6 @@ export const ListingDetailPage: React.FC = () => {
       })
       .finally(() => setLoading(false));
   }, [slug]);
-
-  useEffect(() => {
-    loadListing();
-  }, [loadListing]);
-
-  useCatalogRealtime(loadListing);
 
   if (loading) {
     return (

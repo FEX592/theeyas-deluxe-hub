@@ -837,6 +837,7 @@ class Database {
     return initial;
   }
 
+<<<<<<< HEAD
   refreshFromRemote(): boolean {
     if (!remoteStateConfigured()) {
       console.warn('[Realtime] Durable state is not configured; catalog cannot reconcile.');
@@ -865,6 +866,8 @@ class Database {
     })).digest('hex');
   }
 
+=======
+>>>>>>> parent of e48e1e6 (Add live catalog synchronization)
   private save(data = this.data): void {
     if (remoteStateConfigured()) {
       const result = remoteRequest('POST', [{ key: 'store', state: data, updated_at: new Date().toISOString() }]);

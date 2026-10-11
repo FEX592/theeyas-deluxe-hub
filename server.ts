@@ -49,7 +49,7 @@ function getActorEmail(req: Request): string {
 }
 
 function publicRequest(req: Request): boolean {
-  if (req.path === '/api/health' || req.path === '/api/auth/login' || req.path === '/api/auth/signup' || req.path === '/api/auth/session' || req.path === '/api/auth/logout' || req.path === '/api/admin/bootstrap-status' || req.path === '/api/realtime/catalog') return true;
+  if (req.path === '/api/health' || req.path === '/api/auth/login' || req.path === '/api/auth/signup' || req.path === '/api/auth/session' || req.path === '/api/auth/logout' || req.path === '/api/admin/bootstrap-status') return true;
   if (req.method === 'POST' && req.path === '/api/payments/webhooks/paystack') return true;
   if (!req.path.startsWith('/api/')) return req.path === '/login' || req.path === '/signup' || req.path.startsWith('/assets/') || req.path.startsWith('/@') || req.path.includes('.');
   return false;
@@ -104,6 +104,7 @@ app.get('/api/config', (_req: Request, res: Response) => {
   });
 });
 
+<<<<<<< HEAD
 // Public catalog-only live stream. The protected app-state row is reconciled on
 // the server; no orders, private links, sessions, or payment data are emitted.
 app.get('/api/realtime/catalog', (req: Request, res: Response) => {
@@ -140,6 +141,8 @@ app.get('/api/realtime/catalog', (req: Request, res: Response) => {
   res.on('close', close);
 });
 
+=======
+>>>>>>> parent of e48e1e6 (Add live catalog synchronization)
 // 2. First-party account authentication
 app.get('/api/auth/session', (req: AuthenticatedRequest, res: Response) => {
   if (!isAuthConfigured()) {
