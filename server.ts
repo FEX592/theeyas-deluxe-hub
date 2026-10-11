@@ -191,6 +191,7 @@ app.post('/api/auth/logout', (req: Request, res: Response) => {
 
 // Kept for the existing setup screen; it reports status but cannot claim an owner outside signup.
 app.get('/api/admin/bootstrap-status', (_req: Request, res: Response) => {
+  db.refreshFromRemote();
   res.json(db.getBootstrapState());
 });
 
