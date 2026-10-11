@@ -445,7 +445,7 @@ const defaultEmailTemplates: EmailTemplate[] = [
         </table>
 
         <p style="font-size: 14px; line-height: 1.6; color: #706873; margin-bottom: 24px;">
-          Your order is now being processed for access delivery. For automatically fulfilled listings, your access details will arrive momentarily.
+          Your WhatsApp Group or Channel order is being processed. For instant delivery listings, your invitation link will arrive shortly.
         </p>
 
         <div style="text-align: center; margin: 32px 0;">
@@ -507,7 +507,7 @@ const defaultEmailTemplates: EmailTemplate[] = [
         </table>
 
         <p style="font-size: 14px; line-height: 1.6; color: #706873; margin-bottom: 24px;">
-          Your order is now being processed for access delivery. For automatically fulfilled listings, your access details will arrive momentarily.
+          Your WhatsApp Group or Channel order is being processed. For instant delivery listings, your invitation link will arrive shortly.
         </p>
 
         <div style="text-align: center; margin: 32px 0;">
@@ -529,13 +529,13 @@ const defaultEmailTemplates: EmailTemplate[] = [
   {
     id: 'tmpl-order-completed',
     event_key: 'order.completed',
-    name: 'Access Delivery Invitation',
-    subject: "Your Access is Ready: {{listing_name}} — THEEYA'S DELUXE HUB",
+    name: 'WhatsApp Group or Channel Invitation',
+    subject: "Your WhatsApp Invitation Link for {{listing_name}} — THEEYA'S DELUXE HUB",
     html_source: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Your Access is Ready</title>
+  <title>Your WhatsApp Invitation Link</title>
 </head>
 <body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #FCFAF6; margin: 0; padding: 32px 16px; color: #211F23;">
   <table width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 8px; border: 1px solid #E8E2E8; overflow: hidden;">
@@ -546,9 +546,9 @@ const defaultEmailTemplates: EmailTemplate[] = [
     </tr>
     <tr>
       <td style="padding: 32px;">
-        <h1 style="color: #3D183F; font-size: 22px; margin-top: 0; margin-bottom: 12px; font-weight: 600;">Your access has been delivered</h1>
+        <h1 style="color: #3D183F; font-size: 22px; margin-top: 0; margin-bottom: 12px; font-weight: 600;">Your WhatsApp invitation link is ready</h1>
         <p style="font-size: 15px; line-height: 1.6; color: #706873; margin-bottom: 24px;">
-          Hello {{customer_name}}, your order <strong>{{order_id}}</strong> is complete. Your verified invitation link to join <strong>{{listing_name}}</strong> is ready below.
+          Hello {{customer_name}}, your purchase of <strong>{{listing_name}}</strong> (order <strong>{{order_id}}</strong>) is confirmed. Use the verified WhatsApp invitation link below to join the Group or Channel.
         </p>
         
         <div style="background-color: #FAF5FA; border: 1px solid #D6B36A; border-radius: 8px; padding: 24px; text-align: center; margin-bottom: 24px;">
@@ -562,7 +562,7 @@ const defaultEmailTemplates: EmailTemplate[] = [
         </p>
 
         <p style="font-size: 12px; color: #A09A9E; border-top: 1px solid #E8E2E8; padding-top: 16px; margin-bottom: 0;">
-          You can also retrieve your access link anytime from your <a href="{{order_url}}" style="color: #5B2A5F;">Order Details</a> page.
+          You can also find your WhatsApp Group or Channel invitation link anytime from your <a href="{{order_url}}" style="color: #5B2A5F;">Order Details</a> page.
         </p>
       </td>
     </tr>
@@ -576,7 +576,7 @@ const defaultEmailTemplates: EmailTemplate[] = [
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Your Access is Ready</title>
+  <title>Your WhatsApp Invitation Link</title>
 </head>
 <body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #FCFAF6; margin: 0; padding: 32px 16px; color: #211F23;">
   <table width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border-radius: 8px; border: 1px solid #E8E2E8; overflow: hidden;">
@@ -587,9 +587,9 @@ const defaultEmailTemplates: EmailTemplate[] = [
     </tr>
     <tr>
       <td style="padding: 32px;">
-        <h1 style="color: #3D183F; font-size: 22px; margin-top: 0; margin-bottom: 12px; font-weight: 600;">Your access has been delivered</h1>
+        <h1 style="color: #3D183F; font-size: 22px; margin-top: 0; margin-bottom: 12px; font-weight: 600;">Your WhatsApp invitation link is ready</h1>
         <p style="font-size: 15px; line-height: 1.6; color: #706873; margin-bottom: 24px;">
-          Hello {{customer_name}}, your order <strong>{{order_id}}</strong> is complete. Your verified invitation link to join <strong>{{listing_name}}</strong> is ready below.
+          Hello {{customer_name}}, your purchase of <strong>{{listing_name}}</strong> (order <strong>{{order_id}}</strong>) is confirmed. Use the verified WhatsApp invitation link below to join the Group or Channel.
         </p>
         
         <div style="background-color: #FAF5FA; border: 1px solid #D6B36A; border-radius: 8px; padding: 24px; text-align: center; margin-bottom: 24px;">
@@ -603,14 +603,14 @@ const defaultEmailTemplates: EmailTemplate[] = [
         </p>
 
         <p style="font-size: 12px; color: #A09A9E; border-top: 1px solid #E8E2E8; padding-top: 16px; margin-bottom: 0;">
-          You can also retrieve your access link anytime from your <a href="{{order_url}}" style="color: #5B2A5F;">Order Details</a> page.
+          You can also find your WhatsApp Group or Channel invitation link anytime from your <a href="{{order_url}}" style="color: #5B2A5F;">Order Details</a> page.
         </p>
       </td>
     </tr>
   </table>
 </body>
 </html>`,
-    published_subject: "Your Access is Ready: {{listing_name}} — THEEYA'S DELUXE HUB",
+    published_subject: "Your WhatsApp Invitation Link for {{listing_name}} — THEEYA'S DELUXE HUB",
     updated_at: new Date().toISOString(),
     published_at: new Date().toISOString(),
   },

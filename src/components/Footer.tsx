@@ -16,17 +16,17 @@ export const Footer: React.FC = () => {
               <img src="/brand-mark.svg" alt="THEEYA'S DELUXE HUB" className="h-10 w-auto" />
             </Link>
             <p className="text-sm text-[#9CA3AF] leading-relaxed max-w-md">
-              THEEYA'S DELUXE HUB is a marketplace for discovering and purchasing access to WhatsApp Groups and Channels.
+              THEEYA'S DELUXE HUB is a marketplace where you can browse and buy WhatsApp Groups and Channels.
             </p>
             <div className="flex items-center gap-4 text-xs text-[#D6B36A] pt-2">
               <span className="flex items-center gap-1.5">
                 <Shield className="w-3.5 h-3.5" />
-                Verified Community Links
+                Verified WhatsApp Links
               </span>
               <span>·</span>
               <span className="flex items-center gap-1.5">
                 <MessageSquare className="w-3.5 h-3.5" />
-                Protected WhatsApp Delivery
+                WhatsApp Group & Channel Orders
               </span>
             </div>
           </div>
@@ -92,7 +92,7 @@ export const Footer: React.FC = () => {
 
         <div className="mt-12 pt-8 border-t border-[#1F2637] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#6B7280]">
           <p>© {new Date().getFullYear()} THEEYA'S DELUXE HUB. All rights reserved.</p>
-          <p>Curated access to premium WhatsApp Groups and Channels.</p>
+          <p>Shop curated WhatsApp Groups and Channels.</p>
         </div>
       </div>
     </footer>

@@ -51,7 +51,7 @@ export const HomePage: React.FC = () => {
 
               {/* Exact Approved Supporting Text */}
               <p className="mt-6 text-base sm:text-lg text-[#9CA3AF] leading-relaxed max-w-2xl text-balance">
-                Browse available WhatsApp Groups and Channels, explore their details and prices, and order access to the communities that interest you.
+                Browse WhatsApp Groups and Channels, compare their details and prices, and buy the ones that interest you.
               </p>
 
               {/* Action Buttons */}
@@ -60,7 +60,7 @@ export const HomePage: React.FC = () => {
                   to="/marketplace"
                   className="px-6 py-3.5 text-sm font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl shadow-lg transition-all inline-flex items-center gap-2"
                 >
-                  <span>Browse Groups & Channels</span>
+                  <span>Browse WhatsApp Groups & Channels</span>
                   <ArrowRight className="w-4 h-4 text-black" />
                 </Link>
 
@@ -85,7 +85,7 @@ export const HomePage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-[#FACC15]" />
-                  <span>Automated & managed access delivery</span>
+                  <span>WhatsApp invitation links delivered after purchase</span>
                 </div>
               </div>
             </div>
@@ -101,7 +101,7 @@ export const HomePage: React.FC = () => {
                   Curated Selection
                 </span>
                 <h2 className="font-display font-bold text-2xl sm:text-3xl text-white tracking-tight">
-                  Featured WhatsApp Communities
+                  Featured WhatsApp Groups & Channels
                 </h2>
               </div>
               <Link
@@ -133,7 +133,7 @@ export const HomePage: React.FC = () => {
                 Marketplace Categories
               </h2>
               <p className="text-xs text-[#9CA3AF] mt-2">
-                Discover curated networks grouped by industry, investment corridor, and specialization.
+                Discover WhatsApp Groups and Channels by industry, investment focus, and specialization.
               </p>
             </div>
 
@@ -170,7 +170,7 @@ export const HomePage: React.FC = () => {
                 Latest Additions
               </span>
               <h2 className="font-display font-bold text-2xl sm:text-3xl text-white tracking-tight">
-                Available Groups & Channels
+                Available WhatsApp Groups & Channels
               </h2>
             </div>
             <Link
@@ -206,7 +206,7 @@ export const HomePage: React.FC = () => {
                 Fulfillment Process
               </span>
               <h2 className="font-display font-bold text-2xl sm:text-3xl text-white tracking-tight">
-                How Community Access Works
+                How Buying a WhatsApp Group or Channel Works
               </h2>
               <p className="text-sm text-[#9CA3AF] mt-2">
                 Order placement, payment verification, and delivery are governed strictly by verifiable steps.
@@ -218,15 +218,15 @@ export const HomePage: React.FC = () => {
                 <span className="font-display font-extrabold text-2xl text-[#FACC15] block mb-2 font-mono">01</span>
                 <h3 className="font-display font-bold text-base text-white mb-1">Browse Listings</h3>
                 <p className="text-xs text-[#9CA3AF] leading-relaxed">
-                  Review vetted WhatsApp Groups and Channels with published fee tiers and description details.
+                  Browse verified WhatsApp Groups and Channels, with clear descriptions and prices.
                 </p>
               </div>
 
               <div className="p-6 rounded-2xl bg-[#111622] border border-[#1F2637]">
                 <span className="font-display font-extrabold text-2xl text-[#FACC15] block mb-2 font-mono">02</span>
-                <h3 className="font-display font-bold text-base text-white mb-1">Order Access</h3>
+                <h3 className="font-display font-bold text-base text-white mb-1">Choose a Group or Channel</h3>
                 <p className="text-xs text-[#9CA3AF] leading-relaxed">
-                  Provide your customer name, email address, and WhatsApp contact to initiate the order.
+                  Choose the WhatsApp Group or Channel you want to buy, then enter your name, email, and WhatsApp number.
                 </p>
               </div>
 
@@ -240,9 +240,9 @@ export const HomePage: React.FC = () => {
 
               <div className="p-6 rounded-2xl bg-[#111622] border border-[#1F2637]">
                 <span className="font-display font-extrabold text-2xl text-[#FACC15] block mb-2 font-mono">04</span>
-                <h3 className="font-display font-bold text-base text-white mb-1">Receive Access</h3>
+                <h3 className="font-display font-bold text-base text-white mb-1">Join Your WhatsApp Group or Channel</h3>
                 <p className="text-xs text-[#9CA3AF] leading-relaxed">
-                  Upon verified fulfillment, your private invitation link is delivered to your email and order portal.
+                  After your payment is confirmed, we send the WhatsApp Group or Channel invitation link to your email and order page.
                 </p>
               </div>
             </div>

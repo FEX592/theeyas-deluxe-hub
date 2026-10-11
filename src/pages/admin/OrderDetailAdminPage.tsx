@@ -61,7 +61,7 @@ export const OrderDetailAdminPage: React.FC = () => {
       await api.fulfillOrder(id, accessUrl.trim(), fulfillmentNotes.trim());
       setFeedback({
         type: 'success',
-        message: 'Order access delivered and customer notification queued in Brevo outbox.',
+        message: 'WhatsApp Group or Channel invitation link delivered; customer email queued in Brevo.',
       });
       loadData();
     } catch (err: any) {
@@ -80,7 +80,7 @@ export const OrderDetailAdminPage: React.FC = () => {
       await api.resendAccessEmail(id);
       setFeedback({
         type: 'success',
-        message: 'Access email job queued for redelivery.',
+        message: 'WhatsApp invitation email queued to send again.',
       });
       loadData();
     } catch (err: any) {
@@ -93,7 +93,7 @@ export const OrderDetailAdminPage: React.FC = () => {
   return (
     <AdminLayout
       title={`Order Inspection: ${order?.order_number || id}`}
-      subtitle="Verify customer details, review gateway transactions, and deliver private access links"
+      subtitle="Verify purchase details and payments, and send private WhatsApp Group or Channel invitation links"
     >
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
@@ -186,9 +186,9 @@ export const OrderDetailAdminPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Community Item Card */}
+              {/* WhatsApp Listing Card */}
               <div className="bg-[#111622] rounded-2xl border border-[#1F2637] p-6 shadow-xl space-y-3">
-                <h3 className="font-display font-bold text-sm text-white">Purchased Community Snapshot</h3>
+                <h3 className="font-display font-bold text-sm text-white">Purchased WhatsApp Listing</h3>
                 <div className="p-4 rounded-xl bg-[#0B0F17] border border-[#1E2638] flex justify-between items-center text-xs">
                   <div>
                     <span className="font-bold text-white block text-sm">{order.listing_snapshot.name}</span>
@@ -209,7 +209,7 @@ export const OrderDetailAdminPage: React.FC = () => {
                 <div className="flex items-center justify-between pb-3 border-b border-[#1F2637]">
                   <h3 className="font-display font-bold text-sm text-white flex items-center gap-1.5">
                     <MessageSquare className="w-4 h-4 text-[#FACC15]" />
-                    <span>WhatsApp Access Fulfillment</span>
+                    <span>WhatsApp Group or Channel Invitation Delivery</span>
                   </h3>
                   {fulfillment && (
                     <span className="text-[11px] font-semibold text-emerald-300 bg-emerald-950/60 border border-emerald-800 px-2 py-0.5 rounded">
@@ -229,7 +229,7 @@ export const OrderDetailAdminPage: React.FC = () => {
                   <form onSubmit={handleFulfill} className="space-y-4">
                     <div>
                       <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
-                        Private WhatsApp Invitation Link <span className="text-[#FACC15]">*</span>
+                        Private WhatsApp Group or Channel Invitation Link <span className="text-[#FACC15]">*</span>
                       </label>
                       <input
                         type="url"
@@ -278,7 +278,7 @@ export const OrderDetailAdminPage: React.FC = () => {
                           className="px-4 py-3 text-xs font-semibold text-white bg-[#1F2637] hover:bg-[#283248] rounded-xl inline-flex items-center gap-1.5 transition-colors cursor-pointer"
                         >
                           <Mail className="w-3.5 h-3.5 text-[#FACC15]" />
-                          <span>{resendingEmail ? 'Sending...' : 'Resend Access Email'}</span>
+                          <span>{resendingEmail ? 'Sending...' : 'Resend WhatsApp Invitation Email'}</span>
                         </button>
                       )}
                     </div>

@@ -87,10 +87,10 @@ export const OrderDetailPage: React.FC = () => {
                   <span>Verified WhatsApp Invitation Link</span>
                 </div>
                 <h3 className="font-display font-bold text-lg text-white">
-                  Access Ready for {order.listing_snapshot.name}
+                  WhatsApp Invitation Ready for {order.listing_snapshot.name}
                 </h3>
                 <p className="text-xs text-[#9CA3AF] leading-relaxed">
-                  Your purchase has been verified and your community link is ready. Click below to join the WhatsApp Group or Channel directly.
+                  Your purchase is confirmed and your WhatsApp Group or Channel invitation link is ready. Click below to join.
                 </p>
 
                 <div className="pt-2 flex flex-wrap items-center gap-3">
@@ -101,7 +101,7 @@ export const OrderDetailPage: React.FC = () => {
                     className="px-6 py-3.5 bg-[#25D366] hover:bg-[#20ba59] text-black font-bold text-sm rounded-xl shadow-md inline-flex items-center gap-2 transition-transform hover:scale-[1.02]"
                   >
                     <MessageSquare className="w-4 h-4 text-black" />
-                    <span>Join WhatsApp Community Now</span>
+                    <span>Join Your WhatsApp Group or Channel</span>
                   </a>
 
                   <button
@@ -117,7 +117,7 @@ export const OrderDetailPage: React.FC = () => {
               <div className="bg-[#111622] rounded-2xl border border-amber-800 p-6 text-xs text-amber-300 space-y-1">
                 <div className="flex items-center gap-1.5 font-bold mb-1">
                   <Clock className="w-4 h-4 text-[#FACC15]" />
-                  <span>Payment Verified — Fulfilling Community Link</span>
+                  <span>Payment Verified — Preparing Your WhatsApp Invitation Link</span>
                 </div>
                 <p className="text-[#9CA3AF]">
                   Your payment has been confirmed. Our team is finalizing your private invitation link. Once verified, it will appear here and in your inbox.

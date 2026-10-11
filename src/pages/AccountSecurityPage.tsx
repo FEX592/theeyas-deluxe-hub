@@ -80,6 +80,7 @@ export const AccountSecurityPage: React.FC = () => {
               <input
                 type="password"
                 required
+                minLength={8}
                 placeholder="At least 8 characters"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}

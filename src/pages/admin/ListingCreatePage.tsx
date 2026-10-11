@@ -73,7 +73,7 @@ export const ListingCreatePage: React.FC = () => {
     }
 
     if (fulfillmentMode === 'automatic' && !customerAccessUrl.trim()) {
-      setError('Automatic fulfillment requires a valid private customer access link.');
+      setError('Automatic delivery requires a valid WhatsApp Group or Channel invitation link.');
       return;
     }
 
@@ -108,7 +108,7 @@ export const ListingCreatePage: React.FC = () => {
 
   return (
     <AdminLayout
-      title="Create Community Listing"
+      title="Create WhatsApp Group or Channel Listing"
       subtitle="Add a new WhatsApp Group or Channel to THEEYA'S DELUXE HUB"
     >
       <div className="max-w-4xl mx-auto">
@@ -141,7 +141,7 @@ export const ListingCreatePage: React.FC = () => {
                 Import from WhatsApp Invitation Link
               </h2>
               <p className="text-xs text-[#9CA3AF] mb-6">
-                Paste your Group or Channel URL. TDH will inspect its destination type and populate required fulfillment links safely.
+                Paste the WhatsApp Group or Channel URL. TDH will identify its type and prepare the invitation link fields.
               </p>
 
               <form onSubmit={handleSmartImport} className="space-y-4">
@@ -208,7 +208,7 @@ export const ListingCreatePage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="md:col-span-2">
                 <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
-                  Community Name <span className="text-[#FACC15]">*</span>
+                  WhatsApp Group or Channel Name <span className="text-[#FACC15]">*</span>
                 </label>
                 <input
                   type="text"
@@ -240,7 +240,7 @@ export const ListingCreatePage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
-                  Community Type <span className="text-[#FACC15]">*</span>
+                  WhatsApp Listing Type <span className="text-[#FACC15]">*</span>
                 </label>
                 <select
                   value={type}
@@ -298,12 +298,12 @@ export const ListingCreatePage: React.FC = () => {
 
               <div className="md:col-span-2">
                 <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
-                  Description & Community Standards <span className="text-[#FACC15]">*</span>
+                  WhatsApp Group or Channel Description & Guidelines <span className="text-[#FACC15]">*</span>
                 </label>
                 <textarea
                   rows={4}
                   required
-                  placeholder="Describe the membership criteria, target audience, and guidelines of this WhatsApp community..."
+                  placeholder="Describe this WhatsApp Group or Channel, including its audience and guidelines..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-3.5 py-2.5 text-sm bg-[#0B0F17] border border-[#1E2638] rounded-xl focus:outline-none focus:border-[#FACC15] text-white"
@@ -343,7 +343,7 @@ export const ListingCreatePage: React.FC = () => {
             <div className="pt-6 border-t border-[#1F2637] space-y-4">
               <div>
                 <h3 className="font-display font-bold text-sm text-white">
-                  Private Community Invitation Links
+                  WhatsApp Group or Channel Invitation Links
                 </h3>
                 <p className="text-xs text-[#9CA3AF]">
                   These URLs are stored strictly in private backend storage and are NEVER returned in public listing queries.
@@ -353,7 +353,7 @@ export const ListingCreatePage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
-                    Customer Access Invitation URL <span className="text-[#FACC15]">*</span>
+                    Customer WhatsApp Invitation Link <span className="text-[#FACC15]">*</span>
                   </label>
                   <input
                     type="url"
@@ -363,7 +363,7 @@ export const ListingCreatePage: React.FC = () => {
                     className="w-full px-3.5 py-2.5 text-sm bg-[#0B0F17] border border-[#1E2638] rounded-xl focus:outline-none focus:border-[#FACC15] text-white font-mono text-xs"
                   />
                   <span className="text-[11px] text-[#6B7280] mt-1 block">
-                    Sent to verified paying customers upon order completion.
+                    Sent to customers after their WhatsApp Group or Channel purchase is confirmed.
                   </span>
                 </div>
 
@@ -399,7 +399,7 @@ export const ListingCreatePage: React.FC = () => {
                 disabled={saving}
                 className="px-6 py-3 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl transition-all shadow-md cursor-pointer disabled:opacity-60"
               >
-                {saving ? 'Saving Listing...' : 'Publish Community Listing'}
+                {saving ? 'Saving Listing...' : 'Publish WhatsApp Listing'}
               </button>
             </div>
           </form>

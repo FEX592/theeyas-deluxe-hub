@@ -45,7 +45,7 @@ export const ListingsPage: React.FC = () => {
 
   return (
     <AdminLayout
-      title="Community Listings"
+      title="WhatsApp Group & Channel Listings"
       subtitle="Manage WhatsApp Groups and Channels available in the marketplace"
       actions={
         <Link
@@ -53,7 +53,7 @@ export const ListingsPage: React.FC = () => {
           className="px-4 py-2.5 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl transition-all shadow-md inline-flex items-center gap-1.5"
         >
           <Plus className="w-4 h-4 text-black" />
-          <span>New Community Listing</span>
+          <span>New WhatsApp Listing</span>
         </Link>
       }
     >
@@ -90,7 +90,7 @@ export const ListingsPage: React.FC = () => {
           <table className="w-full text-left text-xs text-[#F3F4F6]">
             <thead className="bg-[#0D111A] border-b border-[#1F2637] text-[#9CA3AF] font-semibold uppercase tracking-wider">
               <tr>
-                <th className="py-3 px-4">Community</th>
+                <th className="py-3 px-4">WhatsApp Listing</th>
                 <th className="py-3 px-4">Type</th>
                 <th className="py-3 px-4">Category</th>
                 <th className="py-3 px-4">Fee (NGN)</th>
@@ -136,7 +136,7 @@ export const ListingsPage: React.FC = () => {
                       </td>
 
                       <td className="py-3.5 px-4 font-medium text-[#9CA3AF]">
-                        {item.type === 'group' ? 'Group' : 'Channel'}
+                        {item.type === 'group' ? 'WhatsApp Group' : 'WhatsApp Channel'}
                       </td>
 
                       <td className="py-3.5 px-4 text-[#9CA3AF]">{cat?.name || 'General'}</td>

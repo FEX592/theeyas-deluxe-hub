@@ -40,7 +40,7 @@ export const OrdersPage: React.FC = () => {
   return (
     <AdminLayout
       title="Orders Queue"
-      subtitle="Track customer transactions, manage payment verification, and deliver WhatsApp access"
+      subtitle="Track customer purchases, verify payments, and send WhatsApp Group or Channel invitation links"
     >
       <div className="space-y-6">
         {/* Filter bar */}

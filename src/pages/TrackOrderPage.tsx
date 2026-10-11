@@ -50,10 +50,10 @@ export const TrackOrderPage: React.FC = () => {
             Order Verification
           </span>
           <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight">
-            Track Order & Access
+            Track Your WhatsApp Group or Channel Order
           </h1>
           <p className="text-xs sm:text-sm text-[#9CA3AF] mt-2">
-            Enter your Order ID along with the email address used during purchase to check payment verification and retrieve your access link.
+            Enter your Order ID and purchase email to check your payment and retrieve your WhatsApp Group or Channel invitation link.
           </p>
         </div>
 
@@ -87,7 +87,7 @@ export const TrackOrderPage: React.FC = () => {
                 className="w-full px-3.5 py-2.5 text-sm bg-[#0B0F17] border border-[#1E2638] rounded-xl focus:outline-none focus:border-[#FACC15] text-white"
               />
               <span className="text-[11px] text-[#6B7280] mt-1 block">
-                Required to protect community access links from unauthorized disclosure.
+                Required to protect your WhatsApp Group or Channel invitation link.
               </span>
             </div>
 
@@ -223,7 +223,7 @@ export const TrackOrderPage: React.FC = () => {
                   Verified WhatsApp Invitation Link
                 </span>
                 <p className="text-xs text-[#9CA3AF]">
-                  Your access to <strong className="text-white">{trackedOrder.listing_snapshot.name}</strong> is ready.
+                  Your WhatsApp Group or Channel invitation for <strong className="text-white">{trackedOrder.listing_snapshot.name}</strong> is ready.
                 </p>
                 <div className="pt-2">
                   <a
@@ -233,7 +233,7 @@ export const TrackOrderPage: React.FC = () => {
                     className="px-6 py-3.5 bg-[#25D366] hover:bg-[#20ba59] text-black font-bold text-sm rounded-xl shadow-md inline-flex items-center gap-2 transition-transform hover:scale-[1.02]"
                   >
                     <MessageSquare className="w-4 h-4 text-black" />
-                    <span>Join WhatsApp Community</span>
+                    <span>Join Your WhatsApp Group or Channel</span>
                   </a>
                 </div>
                 <p className="text-[11px] text-[#6B7280] pt-1">

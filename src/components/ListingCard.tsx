@@ -48,7 +48,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, categoryName 
           <div className="flex items-center gap-2 text-xs text-[#9CA3AF] mb-2 font-medium">
             <span>{categoryName || 'General'}</span>
             <span aria-hidden="true" className="text-[#D6B36A]">·</span>
-            <span>{listing.fulfillment_mode === 'automatic' ? 'Instant Access' : 'Verified Fulfillment'}</span>
+            <span>{listing.fulfillment_mode === 'automatic' ? 'Instant WhatsApp Link' : 'Verified Fulfillment'}</span>
           </div>
 
           <h3 className="font-display font-semibold text-base text-white group-hover:text-[#FACC15] transition-colors leading-snug line-clamp-2">
@@ -64,7 +64,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, categoryName 
         <div className="pt-4 border-t border-[#1F2637] flex items-center justify-between">
           <div>
             <span className="text-[11px] uppercase tracking-wider text-[#9CA3AF] block font-medium">
-              Access Fee
+              WhatsApp Group/Channel Price
             </span>
             <span className="font-display font-extrabold text-base text-[#FACC15] font-mono tabular-nums">
               NGN {listing.price_ngn.toLocaleString('en-NG')}

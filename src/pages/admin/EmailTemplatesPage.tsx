@@ -34,7 +34,7 @@ export const EmailTemplatesPage: React.FC = () => {
   return (
     <AdminLayout
       title="Transactional Email Templates"
-      subtitle="HTML-source managed templates dispatched through Brevo during order and access events"
+      subtitle="HTML email templates sent through Brevo for order updates and WhatsApp invitation links"
     >
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="bg-[#111622] rounded-2xl border border-[#1F2637] overflow-hidden shadow-xl">

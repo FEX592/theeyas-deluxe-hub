@@ -60,7 +60,6 @@ export const LoginPage: React.FC = () => {
             type="password"
             autoComplete="current-password"
             required
-            minLength={10}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter your password"
@@ -76,7 +75,7 @@ export const LoginPage: React.FC = () => {
 
       <div className="my-6 flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.15em] text-[#62616A]">
         <span className="h-px flex-1 bg-white/[0.08]" />
-        <span>Member access</span>
+        <span>Member sign-in</span>
         <span className="h-px flex-1 bg-white/[0.08]" />
       </div>
       <p className="text-center text-sm text-[#92919B]">

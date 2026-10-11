@@ -59,7 +59,7 @@ export const ListingDetailPage: React.FC = () => {
         <Header />
         <main className="flex-1 max-w-xl mx-auto px-4 py-20 text-center">
           <div className="bg-[#111622] rounded-2xl border border-[#1F2637] p-8 shadow-xl">
-            <h2 className="font-display font-bold text-2xl text-white mb-3">Community Listing Not Found</h2>
+            <h2 className="font-display font-bold text-2xl text-white mb-3">WhatsApp Group or Channel Not Found</h2>
             <p className="text-sm text-[#9CA3AF] mb-6">
               The requested WhatsApp Group or Channel listing does not exist, has been archived, or is currently unpublished.
             </p>
@@ -94,7 +94,7 @@ export const ListingDetailPage: React.FC = () => {
           <div className="flex items-center gap-2 text-xs text-[#9CA3AF]">
             <span>Marketplace</span>
             <span aria-hidden="true" className="text-[#6B7280]">/</span>
-            <span>{category?.name || 'Community'}</span>
+            <span>{category?.name || 'WhatsApp Group or Channel'}</span>
             <span aria-hidden="true" className="text-[#6B7280]">/</span>
             <span className="text-white font-semibold truncate max-w-xs">{listing.name}</span>
           </div>
@@ -117,7 +117,7 @@ export const ListingDetailPage: React.FC = () => {
                     parent.classList.add('flex', 'items-center', 'justify-center', 'bg-[#111622]');
                     const fallback = document.createElement('div');
                     fallback.className = 'text-center p-8 text-white';
-                    fallback.innerHTML = `<span class="font-bold text-sm tracking-widest block uppercase text-[#FACC15]">THEEYA'S DELUXE HUB</span><span class="text-xs text-[#9CA3AF]">Verified Community</span>`;
+                    fallback.innerHTML = `<span class="font-bold text-sm tracking-widest block uppercase text-[#FACC15]">THEEYA'S DELUXE HUB</span><span class="text-xs text-[#9CA3AF]">Verified WhatsApp Listing</span>`;
                     parent.appendChild(fallback);
                   }
                 }}
@@ -127,7 +127,7 @@ export const ListingDetailPage: React.FC = () => {
             {/* Description Section */}
             <div className="bg-[#111622] rounded-2xl border border-[#1F2637] p-6 md:p-8 space-y-6 shadow-xl">
               <div>
-                <h2 className="font-display font-bold text-lg text-white mb-3">Community Description & Focus</h2>
+                <h2 className="font-display font-bold text-lg text-white mb-3">WhatsApp Group or Channel Description</h2>
                 <div className="text-sm text-[#9CA3AF] leading-relaxed whitespace-pre-line space-y-4">
                   {listing.description}
                 </div>
@@ -136,12 +136,12 @@ export const ListingDetailPage: React.FC = () => {
               {/* Verified Features */}
               <div className="pt-6 border-t border-[#1F2637] space-y-3">
                 <h3 className="font-display font-semibold text-xs tracking-wider uppercase text-[#FACC15]">
-                  Verification & Access Standards
+                  WhatsApp Listing & Purchase Details
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-[#9CA3AF]">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
-                    <span>Curated WhatsApp Group or Channel</span>
+                    <span>Verified WhatsApp Group or Channel</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
@@ -180,7 +180,7 @@ export const ListingDetailPage: React.FC = () => {
               <div className="p-4 bg-[#0B0F17] rounded-xl border border-[#1E2638] flex items-center justify-between">
                 <div>
                   <span className="text-[11px] uppercase tracking-wider text-[#9CA3AF] block font-medium">
-                    Membership / Access Fee
+                    WhatsApp Group/Channel Price
                   </span>
                   <div className="flex items-baseline gap-1 mt-0.5">
                     <span className="font-display font-extrabold text-2xl sm:text-3xl text-[#FACC15] font-mono tabular-nums">
@@ -190,7 +190,7 @@ export const ListingDetailPage: React.FC = () => {
                 </div>
                 <div className="text-right text-[11px] text-[#10B981] font-semibold flex items-center gap-1">
                   <ShieldCheck className="w-4 h-4 text-[#10B981]" />
-                  <span>One-time Access</span>
+                  <span>One-time Purchase</span>
                 </div>
               </div>
 
@@ -200,14 +200,14 @@ export const ListingDetailPage: React.FC = () => {
                   <Zap className="w-4 h-4 text-[#FACC15]" />
                   <span>
                     {listing.fulfillment_mode === 'automatic'
-                      ? 'Instant Automatic Delivery'
-                      : 'Managed Administrator Fulfillment'}
+                      ? 'Instant Invitation Link Delivery'
+                      : 'Invitation Link Sent After Review'}
                   </span>
                 </div>
                 <p className="leading-relaxed">
                   {listing.fulfillment_mode === 'automatic'
-                    ? 'Upon server-side Paystack payment confirmation, your private invitation link is generated and sent immediately to your email.'
-                    : 'Payment is verified by Paystack, after which our administration team reviews the order and delivers your verified invitation link.'}
+                    ? 'After Paystack confirms your payment, the WhatsApp Group or Channel invitation link is sent to your email.'
+                    : 'After Paystack confirms your payment, our team reviews your order and emails you the WhatsApp Group or Channel invitation link.'}
                 </p>
               </div>
 
@@ -217,7 +217,7 @@ export const ListingDetailPage: React.FC = () => {
                   onClick={() => navigate(`/checkout/${listing.id}`)}
                   className="w-full py-4 px-6 bg-[#FACC15] hover:bg-[#EAB308] text-black font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer group"
                 >
-                  <span>Order Access Now</span>
+                  <span>Buy This WhatsApp {listing.type === 'group' ? 'Group' : 'Channel'}</span>
                   <ArrowRight className="w-4 h-4 text-black group-hover:translate-x-0.5 transition-transform" />
                 </button>
 

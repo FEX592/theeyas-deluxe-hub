@@ -79,10 +79,10 @@ export const SignupPage: React.FC = () => {
               type="password"
               autoComplete="new-password"
               required
-              minLength={10}
+              minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="At least 10 characters"
+              placeholder="At least 8 characters"
               className="w-full rounded-xl border border-white/10 bg-[#0B0C12] px-4 py-3 text-sm text-white outline-none transition placeholder:text-[#555560] focus:border-[#D6B36A]/70 focus:ring-4 focus:ring-[#D6B36A]/10"
             />
           </div>
@@ -94,7 +94,7 @@ export const SignupPage: React.FC = () => {
               type="password"
               autoComplete="new-password"
               required
-              minLength={10}
+              minLength={8}
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               placeholder="Repeat password"
@@ -102,7 +102,7 @@ export const SignupPage: React.FC = () => {
             />
           </div>
         </div>
-        <p className="-mt-1 text-[11px] leading-5 text-[#777681]">Use at least 10 characters. The first account becomes the store administrator.</p>
+        <p className="-mt-1 text-[11px] leading-5 text-[#777681]">Use at least 8 characters. The first account becomes the store administrator.</p>
         <button type="submit" disabled={loading} className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#F1D48E] to-[#D6B36A] px-4 py-3.5 text-sm font-bold text-[#211A10] shadow-[0_8px_24px_rgba(214,179,106,0.16)] transition hover:brightness-105 disabled:cursor-wait disabled:opacity-60">
           <UserRoundPlus className="h-4 w-4" />
           {loading ? 'Creating account…' : 'Create account'}

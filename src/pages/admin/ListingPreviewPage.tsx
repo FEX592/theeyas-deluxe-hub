@@ -26,7 +26,7 @@ export const ListingPreviewPage: React.FC = () => {
   return (
     <AdminLayout
       title="Listing Safe Preview"
-      subtitle="Preview how this community listing renders to public marketplace visitors"
+      subtitle="Preview how this WhatsApp Group or Channel listing appears in the marketplace"
       actions={
         id && (
           <Link
@@ -94,7 +94,7 @@ export const ListingPreviewPage: React.FC = () => {
                 </div>
                 <h2 className="font-display font-bold text-xl text-white">{listing.name}</h2>
                 <div className="p-4 bg-[#111622] rounded-xl border border-[#1F2637] flex justify-between items-baseline">
-                  <span className="text-xs text-[#9CA3AF]">Access Fee:</span>
+                  <span className="text-xs text-[#9CA3AF]">WhatsApp Group/Channel Price:</span>
                   <span className="font-display font-bold text-xl text-[#FACC15] font-mono tabular-nums">
                     ₦{listing.price_ngn.toLocaleString('en-NG')}
                   </span>
@@ -107,7 +107,7 @@ export const ListingPreviewPage: React.FC = () => {
                   disabled
                   className="w-full py-3 bg-[#1F2637] text-[#9CA3AF] font-bold text-xs rounded-xl cursor-not-allowed"
                 >
-                  Order Access Now (Admin Preview)
+                  Buy This WhatsApp {listing.type === 'group' ? 'Group' : 'Channel'} (Admin Preview)
                 </button>
               </div>
             </div>

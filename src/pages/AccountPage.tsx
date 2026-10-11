@@ -34,7 +34,7 @@ export const AccountPage: React.FC = () => {
         <main className="flex-1 max-w-md mx-auto px-4 py-20 text-center">
           <div className="bg-[#111622] rounded-2xl border border-[#1F2637] p-8 shadow-xl">
             <h2 className="font-display font-bold text-xl text-white mb-2">Sign In Required</h2>
-            <p className="text-xs text-[#9CA3AF] mb-4">Please log in to review your profile and purchased access links.</p>
+            <p className="text-xs text-[#9CA3AF] mb-4">Please log in to review your profile and WhatsApp Group or Channel orders.</p>
             <Link to="/login" className="px-5 py-2.5 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl transition-all shadow-md inline-block">
               Go to Sign In
             </Link>
@@ -112,7 +112,7 @@ export const AccountPage: React.FC = () => {
             <div className="flex items-center justify-between pb-3 border-b border-[#1F2637]">
               <h3 className="font-display font-bold text-base text-white flex items-center gap-2">
                 <Package className="w-4 h-4 text-[#FACC15]" />
-                <span>My Community Access Orders</span>
+                <span>My WhatsApp Group & Channel Orders</span>
               </h3>
               <span className="text-xs text-[#9CA3AF] font-mono">
                 {orders.length} {orders.length === 1 ? 'order' : 'orders'}

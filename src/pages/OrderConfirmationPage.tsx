@@ -89,7 +89,7 @@ export const OrderConfirmationPage: React.FC = () => {
               <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-white">
                 {order.payment_status === 'paid'
                   ? order.order_status === 'completed'
-                    ? 'Payment Confirmed & Access Ready'
+                    ? 'Payment Confirmed — WhatsApp Link Ready'
                     : 'Payment Verified — Awaiting Fulfillment'
                   : 'Order Created — Payment Awaiting Confirmation'}
               </h1>
@@ -103,10 +103,10 @@ export const OrderConfirmationPage: React.FC = () => {
             {fulfillment && order.order_status === 'completed' && (
               <div className="p-6 rounded-2xl bg-[#0B0F17] border border-[#FACC15]/40 text-center space-y-3">
                 <span className="text-xs uppercase tracking-wider text-[#FACC15] font-bold block">
-                  Your WhatsApp Invitation Link
+                  Your WhatsApp Group or Channel Invitation Link
                 </span>
                 <p className="text-xs text-[#9CA3AF]">
-                  Your purchase of <strong className="text-white">{order.listing_snapshot.name}</strong> is verified. You can now join the community.
+                  Your purchase of <strong className="text-white">{order.listing_snapshot.name}</strong> is confirmed. Use the link below to join your WhatsApp Group or Channel.
                 </p>
                 <div className="pt-2">
                   <a
@@ -116,7 +116,7 @@ export const OrderConfirmationPage: React.FC = () => {
                     className="px-6 py-3.5 bg-[#25D366] hover:bg-[#20ba59] text-black font-bold text-sm rounded-xl shadow-md inline-flex items-center gap-2 transition-transform hover:scale-[1.02]"
                   >
                     <MessageSquare className="w-4 h-4 text-black" />
-                    <span>Join WhatsApp Community Now</span>
+                    <span>Join Your WhatsApp Group or Channel</span>
                   </a>
                 </div>
                 <p className="text-[11px] text-[#6B7280] pt-1">
@@ -135,7 +135,7 @@ export const OrderConfirmationPage: React.FC = () => {
                 <div className="flex justify-between">
                   <span className="text-[#9CA3AF]">Community Listing:</span>
                   <span className="font-semibold text-white text-right">
-                    {order.listing_snapshot.name} ({order.listing_snapshot.type === 'group' ? 'Group' : 'Channel'})
+                    {order.listing_snapshot.name} (WhatsApp {order.listing_snapshot.type === 'group' ? 'Group' : 'Channel'})
                   </span>
                 </div>
                 <div className="flex justify-between">

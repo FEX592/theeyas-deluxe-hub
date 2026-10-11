@@ -53,7 +53,7 @@ export const AdminOverviewPage: React.FC = () => {
           className="px-4 py-2.5 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl transition-all shadow-md inline-flex items-center gap-1.5"
         >
           <Plus className="w-4 h-4 text-black" />
-          <span>New Community Listing</span>
+          <span>New WhatsApp Group or Channel Listing</span>
         </Link>
       }
     >
@@ -100,7 +100,7 @@ export const AdminOverviewPage: React.FC = () => {
             <span className="font-display font-extrabold text-2xl text-[#10B981] font-mono tabular-nums">
               {completedOrders}
             </span>
-            <span className="text-xs text-[#6B7280]">access delivered</span>
+            <span className="text-xs text-[#6B7280]">WhatsApp invitation links sent</span>
           </div>
           <Link to="/admin/orders" className="text-xs text-[#FACC15] font-semibold mt-3 inline-block hover:underline">
             Inspect all orders →

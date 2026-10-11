@@ -72,7 +72,7 @@ export function createAccount(emailInput: string, displayNameInput: string, pass
   const email = emailInput.trim().toLowerCase();
   const displayName = displayNameInput.trim() || email.split('@')[0];
   if (!email || !email.includes('@')) throw new Error('A valid email address is required.');
-  if (password.length < 10) throw new Error('Password must be at least 10 characters.');
+  if (password.length < 8) throw new Error('Password must be at least 8 characters.');
   const existing = request('GET', `/tdh_auth_users?email=eq.${encodeURIComponent(email)}&select=id&limit=1`) as Array<{ id: string }>;
   if (existing.length) throw new Error('An account with this email already exists.');
   const rows = request('POST', '/tdh_auth_users', [{ id: crypto.randomUUID(), email, display_name: displayName, role, password_hash: hashPassword(password) }]) as AuthRow[];

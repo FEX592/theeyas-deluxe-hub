@@ -40,7 +40,7 @@ export const CheckoutPage: React.FC = () => {
       return;
     }
     if (!email.trim() || !email.includes('@')) {
-      setErrorMessage('Please enter a valid email address for receipt and access delivery.');
+      setErrorMessage('Please enter a valid email address for your receipt and WhatsApp invitation link.');
       return;
     }
     if (!whatsappNumber.trim() || whatsappNumber.length < 8) {
@@ -89,7 +89,7 @@ export const CheckoutPage: React.FC = () => {
             Order Checkout
           </h1>
           <p className="text-xs text-[#9CA3AF] mt-1">
-            Review your purchase and provide contact details for community access delivery.
+            Review your WhatsApp Group or Channel purchase and enter the contact details for your order and invitation link.
           </p>
         </div>
 
@@ -118,7 +118,7 @@ export const CheckoutPage: React.FC = () => {
                 Customer Information
               </h2>
               <p className="text-xs text-[#9CA3AF] mb-6">
-                Your email and WhatsApp contact are used solely for order confirmation and invitation delivery.
+                We use your email and WhatsApp number to confirm your WhatsApp Group or Channel purchase and send its invitation link.
               </p>
 
               {errorMessage && (
@@ -156,7 +156,7 @@ export const CheckoutPage: React.FC = () => {
                     className="w-full px-3.5 py-2.5 text-sm bg-[#0B0F17] border border-[#1E2638] rounded-xl focus:outline-none focus:border-[#FACC15] text-white"
                   />
                   <span className="text-[11px] text-[#6B7280] mt-1 block">
-                    Transactional payment receipts and the access link will be delivered here.
+                    Your payment receipt and WhatsApp Group or Channel invitation link will be sent here.
                   </span>
                 </div>
 
@@ -173,7 +173,7 @@ export const CheckoutPage: React.FC = () => {
                     className="w-full px-3.5 py-2.5 text-sm bg-[#0B0F17] border border-[#1E2638] rounded-xl focus:outline-none focus:border-[#FACC15] text-white"
                   />
                   <span className="text-[11px] text-[#6B7280] mt-1 block">
-                    Phone number associated with your WhatsApp app for membership verification.
+                    Enter the phone number linked to your WhatsApp account so you can join the WhatsApp Group or Channel you buy.
                   </span>
                 </div>
 
@@ -234,7 +234,7 @@ export const CheckoutPage: React.FC = () => {
 
               <div className="space-y-2 text-xs text-[#9CA3AF]">
                 <div className="flex justify-between">
-                  <span>Community Access Fee</span>
+                  <span>WhatsApp Group/Channel Price</span>
                   <span className="font-mono text-white font-medium">
                     ₦{listing.price_ngn.toLocaleString('en-NG')}
                   </span>

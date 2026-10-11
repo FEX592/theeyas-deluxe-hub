@@ -85,7 +85,7 @@ export const ListingEditPage: React.FC = () => {
 
   return (
     <AdminLayout
-      title="Edit Community Listing"
+      title="Edit WhatsApp Group or Channel Listing"
       subtitle={`Modifying listing: ${name || id}`}
       actions={
         id && (
@@ -126,7 +126,7 @@ export const ListingEditPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="md:col-span-2">
                 <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
-                  Community Name <span className="text-[#FACC15]">*</span>
+                  WhatsApp Group or Channel Name <span className="text-[#FACC15]">*</span>
                 </label>
                 <input
                   type="text"
@@ -152,7 +152,7 @@ export const ListingEditPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
-                  Community Type <span className="text-[#FACC15]">*</span>
+                  WhatsApp Listing Type <span className="text-[#FACC15]">*</span>
                 </label>
                 <select
                   value={type}
@@ -224,7 +224,7 @@ export const ListingEditPage: React.FC = () => {
 
               <div className="md:col-span-2">
                 <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
-                  Description & Community Standards <span className="text-[#FACC15]">*</span>
+                  WhatsApp Group or Channel Description & Guidelines <span className="text-[#FACC15]">*</span>
                 </label>
                 <textarea
                   rows={4}
@@ -269,7 +269,7 @@ export const ListingEditPage: React.FC = () => {
             <div className="pt-6 border-t border-[#1F2637] space-y-4">
               <div>
                 <h3 className="font-display font-bold text-sm text-white">
-                  Private Community Invitation Links
+                  WhatsApp Group or Channel Invitation Links
                 </h3>
                 <p className="text-xs text-[#9CA3AF]">
                   These URLs are stored strictly in private backend storage and are NEVER returned in public listing queries.
@@ -279,7 +279,7 @@ export const ListingEditPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
-                    Customer Access Invitation URL <span className="text-[#FACC15]">*</span>
+                    Customer WhatsApp Invitation Link <span className="text-[#FACC15]">*</span>
                   </label>
                   <input
                     type="url"

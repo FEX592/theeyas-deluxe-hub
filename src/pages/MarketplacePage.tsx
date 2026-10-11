@@ -97,7 +97,7 @@ export const MarketplacePage: React.FC = () => {
             WhatsApp Groups & Channels
           </h1>
           <p className="mt-2 text-sm text-[#9CA3AF] max-w-2xl">
-            Explore active communities with vetted access terms, verified pricing in NGN, and managed fulfillment.
+            Browse WhatsApp Groups and Channels with verified prices in NGN and clear order fulfillment.
           </p>
         </div>
 
@@ -109,7 +109,7 @@ export const MarketplacePage: React.FC = () => {
               <Search className="w-4 h-4 text-[#9CA3AF] absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search by community name, topic or keywords..."
+                placeholder="Search WhatsApp Groups and Channels by name, topic, or keywords..."
                 value={searchQuery}
                 onChange={(e) => updateParam('q', e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 text-sm bg-[#0B0F17] border border-[#1E2638] rounded-xl focus:outline-none focus:border-[#FACC15] text-white placeholder:text-[#6B7280] transition-colors"
@@ -190,7 +190,7 @@ export const MarketplacePage: React.FC = () => {
 
             <div className="flex items-center gap-4">
               <span className="text-[#9CA3AF] font-mono tabular-nums">
-                {filteredListings.length} {filteredListings.length === 1 ? 'community' : 'communities'}
+                {filteredListings.length} {filteredListings.length === 1 ? 'WhatsApp listing' : 'WhatsApp listings'}
               </span>
 
               {hasActiveFilters && (
