@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../../lib/api.ts';
 import { StoreSettings } from '../../types.ts';
 import { AdminLayout } from '../../components/AdminLayout.tsx';
-import { BrevoSenderSettings } from '../../components/BrevoSenderSettings.tsx';
 import { Settings, Save, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 
 export const StoreSettingsPage: React.FC = () => {
@@ -49,20 +48,9 @@ export const StoreSettingsPage: React.FC = () => {
   return (
     <AdminLayout
       title="Store & Integration Settings"
-      subtitle="Identity defaults, customer support channels, and Brevo transactional sender parameters"
+      subtitle="Manage store identity and customer support contacts"
     >
-      <div className="max-w-6xl mx-auto space-y-10">
-        {/* Exact Brevo Sender Settings Component from Screenshot */}
-        <section>
-          <div className="mb-4">
-            <h2 className="font-display font-bold text-lg text-white">Transactional Email Configuration</h2>
-            <p className="text-xs text-[#9CA3AF]">
-              Configure Brevo verified sender parameters and test real email delivery.
-            </p>
-          </div>
-          <BrevoSenderSettings />
-        </section>
-
+      <div className="max-w-6xl mx-auto">
         {/* General Store Identity Section (Dark Theme) */}
         <section className="bg-[#111622] border border-[#1F2637] rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl">
           <div className="flex items-center gap-2.5">

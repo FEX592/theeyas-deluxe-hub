@@ -1,308 +1,82 @@
-import React, { useEffect, useState } from 'react';
-import { api } from '../../lib/api.ts';
-import { PaymentProviderConfig } from '../../types.ts';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Activity, AlertCircle, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
 import { AdminLayout } from '../../components/AdminLayout.tsx';
-import { Key, Shield, CheckCircle2, AlertCircle, Copy, Check, Loader2 } from 'lucide-react';
+import { api } from '../../lib/api.ts';
+
+type ApiStatus = 'checking' | 'active' | 'inactive';
 
 export const PaymentsPage: React.FC = () => {
-  const [provider, setProvider] = useState<PaymentProviderConfig | null>(null);
-  const [environment, setEnvironment] = useState<'test' | 'live'>('test');
-  const [secretKey, setSecretKey] = useState('');
-  const [publicKey, setPublicKey] = useState('');
-  const [subaccountCode, setSubaccountCode] = useState('');
-  const [splitCode, setSplitCode] = useState('');
-  const [feeBearer, setFeeBearer] = useState<'account' | 'subaccount'>('account');
+  const [status, setStatus] = useState<ApiStatus>('checking');
+  const [message, setMessage] = useState('Checking the Paystack API…');
+  const [checkedAt, setCheckedAt] = useState<string | null>(null);
 
-  const [saving, setSaving] = useState(false);
-  const [testing, setTesting] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [saveFeedback, setSaveFeedback] = useState<string | null>(null);
-  const [testFeedback, setTestFeedback] = useState<{ success: boolean; message: string } | null>(null);
-
-  const webhookUrl = `${window.location.origin}/api/payments/webhooks/paystack`;
-
-  useEffect(() => {
-    api
-      .getPaymentProviders()
-      .then((res) => {
-        const p = res.installed[0];
-        if (p) {
-          setProvider(p);
-          setEnvironment(p.environment);
-          setSubaccountCode(p.subaccount_code || '');
-          setSplitCode(p.split_code || '');
-          setFeeBearer(p.fee_bearer || 'account');
-        }
-      })
-      .catch(console.error);
+  const checkApi = useCallback(async () => {
+    setStatus('checking');
+    setMessage('Checking the Paystack API…');
+    try {
+      const result = await api.checkPaystackStatus();
+      setStatus(result.active ? 'active' : 'inactive');
+      setMessage(result.message);
+      setCheckedAt(new Date().toLocaleString());
+    } catch (error) {
+      setStatus('inactive');
+      setMessage(error instanceof Error ? error.message : 'Could not check the Paystack API. Try again.');
+      setCheckedAt(new Date().toLocaleString());
+    }
   }, []);
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    setSaveFeedback(null);
-    try {
-      const updated = await api.updatePaymentSettings({
-        environment,
-        subaccount_code: subaccountCode.trim(),
-        split_code: splitCode.trim(),
-        fee_bearer: feeBearer,
-      });
-      setProvider(updated);
-      setSaveFeedback('Payment settings saved successfully.');
-      setTimeout(() => setSaveFeedback(null), 3500);
-    } catch (err: any) {
-      setSaveFeedback(err.message || 'Failed to save payment settings');
-    } finally {
-      setSaving(false);
-    }
-  };
+  useEffect(() => {
+    void checkApi();
+  }, [checkApi]);
 
-  const handleTestGateway = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setTesting(true);
-    setTestFeedback(null);
-    try {
-      const health = await api.getHealth();
-      setTestFeedback({
-        success: true,
-        message: health.paystack_configured
-          ? 'Paystack credentials verified. Server-side initialization and verification active.'
-          : 'Paystack test adapter is active in safe simulation mode. Real charges will route once live keys are configured.',
-      });
-    } catch (err: any) {
-      setTestFeedback({
-        success: false,
-        message: err.message || 'Connection test failed',
-      });
-    } finally {
-      setTesting(false);
-    }
-  };
-
-  const copyWebhook = () => {
-    navigator.clipboard.writeText(webhookUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const statusLabel = status === 'checking' ? 'Checking' : status === 'active' ? 'API active' : 'API inactive';
+  const statusColor = status === 'active'
+    ? 'text-emerald-300 border-emerald-700/60 bg-emerald-950/50'
+    : status === 'inactive'
+      ? 'text-red-300 border-red-800/60 bg-red-950/40'
+      : 'text-amber-200 border-amber-700/60 bg-amber-950/30';
 
   return (
-    <AdminLayout
-      title="Payment Settings"
-      subtitle="Configure Paystack credentials, settlement routing, and webhook verification"
-    >
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start max-w-6xl mx-auto">
-        {/* Left Card: Paystack Configuration */}
-        <div className="bg-[#111622] border border-[#1F2637] rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl">
-          <div className="flex items-center gap-2.5">
-            <Key className="w-5 h-5 text-[#FACC15]" />
-            <h2 className="font-display font-bold text-lg text-white tracking-tight">
-              Paystack credentials & routing
-            </h2>
+    <AdminLayout title="Payment API Status" subtitle="Check whether the Paystack API is reachable and accepting the server key.">
+      <div className="mx-auto max-w-3xl">
+        <section className="rounded-2xl border border-[#1F2637] bg-[#111622] p-6 shadow-xl sm:p-8" aria-live="polite">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl border border-[#FACC15]/20 bg-[#FACC15]/10 p-3">
+                <Activity className="h-5 w-5 text-[#FACC15]" />
+              </div>
+              <div>
+                <h2 className="font-display text-lg font-bold tracking-tight text-white">Paystack API connection</h2>
+                <p className="mt-1 text-sm text-[#9CA3AF]">Live status from a secure server-side check.</p>
+              </div>
+            </div>
+            <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${statusColor}`}>
+              {status === 'checking' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : status === 'active' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}
+              {statusLabel}
+            </span>
           </div>
 
-          {saveFeedback && (
-            <div className="p-3 bg-emerald-950/60 border border-emerald-800 text-emerald-300 text-xs rounded-xl flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>{saveFeedback}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSave} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-[#9CA3AF] mb-2">Environment mode</label>
-              <select
-                value={environment}
-                onChange={(e) => setEnvironment(e.target.value as any)}
-                className="w-full px-4 py-3 text-sm bg-[#0B0F17] border border-[#1E2638] rounded-xl text-white focus:outline-none focus:border-[#FACC15] transition-colors"
-              >
-                <option value="test">Test mode (Sandbox)</option>
-                <option value="live">Live mode (Production)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-[#9CA3AF] mb-2">
-                Paystack secret key (Server-only)
-              </label>
-              <input
-                type="password"
-                placeholder={provider?.has_secret ? '••••••••••••••••••••••••••••' : 'sk_test_... or sk_live_...'}
-                value={secretKey}
-                onChange={(e) => setSecretKey(e.target.value)}
-                className="w-full px-4 py-3 text-sm bg-[#0B0F17] border border-[#1E2638] rounded-xl text-white font-mono placeholder:text-[#4B5563] focus:outline-none focus:border-[#FACC15] transition-colors"
-              />
-              <span className="text-[11px] text-[#6B7280] mt-1.5 block">
-                Stored securely on the server (PAYSTACK_SECRET_KEY) and never exposed to browser bundles.
-              </span>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-[#9CA3AF] mb-2">
-                Paystack public key
-              </label>
-              <input
-                type="text"
-                placeholder="pk_test_... or pk_live_..."
-                value={publicKey}
-                onChange={(e) => setPublicKey(e.target.value)}
-                className="w-full px-4 py-3 text-sm bg-[#0B0F17] border border-[#1E2638] rounded-xl text-white font-mono placeholder:text-[#4B5563] focus:outline-none focus:border-[#FACC15] transition-colors"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-[#9CA3AF] mb-2">
-                  Subaccount code (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="ACCT_..."
-                  value={subaccountCode}
-                  onChange={(e) => setSubaccountCode(e.target.value)}
-                  className="w-full px-4 py-3 text-sm bg-[#0B0F17] border border-[#1E2638] rounded-xl text-white font-mono placeholder:text-[#4B5563] focus:outline-none focus:border-[#FACC15] transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-[#9CA3AF] mb-2">
-                  Split code (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="SPL_..."
-                  value={splitCode}
-                  onChange={(e) => setSplitCode(e.target.value)}
-                  className="w-full px-4 py-3 text-sm bg-[#0B0F17] border border-[#1E2638] rounded-xl text-white font-mono placeholder:text-[#4B5563] focus:outline-none focus:border-[#FACC15] transition-colors"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-[#9CA3AF] mb-2">Paystack fee bearer</label>
-              <select
-                value={feeBearer}
-                onChange={(e) => setFeeBearer(e.target.value as any)}
-                className="w-full px-4 py-3 text-sm bg-[#0B0F17] border border-[#1E2638] rounded-xl text-white focus:outline-none focus:border-[#FACC15] transition-colors"
-              >
-                <option value="account">Main account (Store bears transaction fee)</option>
-                <option value="subaccount">Subaccount (Recipient bears transaction fee)</option>
-              </select>
-            </div>
-
-            {/* Gateway Status Inset Box */}
-            <div className="p-4 bg-[#0B0F17] border border-[#1E2638] rounded-xl space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-sm text-white">Paystack integration</span>
-                <span className="text-xs font-bold text-[#10B981]">
-                  {environment === 'live' ? 'Live Connected' : 'Test Active'}
-                </span>
-              </div>
-              <p className="text-xs text-[#6B7280] leading-relaxed">
-                All checkouts compute minor unit kobo amounts on the backend. Transactions are verified
-                authoritatively before fulfillment links are released.
-              </p>
-            </div>
-
-            {/* Yellow Action Button */}
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full py-3.5 text-sm font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin text-black" />
-                  <span>Saving payment settings...</span>
-                </>
-              ) : (
-                <span>Save payment settings</span>
-              )}
-            </button>
-          </form>
-        </div>
-
-        {/* Right Card: Webhook & Verification Testing */}
-        <div className="bg-[#111622] border border-[#1F2637] rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl">
-          <div>
-            <div className="flex items-center gap-2.5 mb-1.5">
-              <Shield className="w-5 h-5 text-[#FACC15]" />
-              <h2 className="font-display font-bold text-lg text-white tracking-tight">
-                Webhook & gateway verification
-              </h2>
-            </div>
-            <p className="text-xs text-[#9CA3AF]">
-              Configure this destination URL in your Paystack Dashboard to receive signed real-time charge events.
+          <div className="mt-6 rounded-xl border border-[#1E2638] bg-[#0B0F17] p-4">
+            <p className={`text-sm ${status === 'active' ? 'text-emerald-200' : status === 'inactive' ? 'text-red-200' : 'text-[#D1D5DB]'}`}>
+              {message}
             </p>
+            {checkedAt && <p className="mt-2 text-xs text-[#6B7280]">Last checked: {checkedAt}</p>}
           </div>
 
-          {testFeedback && (
-            <div
-              className={`p-3 text-xs rounded-xl flex items-center gap-2 ${
-                testFeedback.success
-                  ? 'bg-emerald-950/60 border border-emerald-800 text-emerald-300'
-                  : 'bg-red-950/60 border border-red-800 text-red-300'
-              }`}
-            >
-              {testFeedback.success ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              ) : (
-                <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-              )}
-              <span>{testFeedback.message}</span>
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={() => void checkApi()}
+            disabled={status === 'checking'}
+            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#FACC15] px-4 py-3.5 text-sm font-bold text-black shadow-md transition hover:bg-[#EAB308] disabled:cursor-wait disabled:opacity-60 sm:w-auto"
+          >
+            {status === 'checking' ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            {status === 'checking' ? 'Checking API…' : 'Check API again'}
+          </button>
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-[#9CA3AF] mb-2">
-                Production Webhook URL
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={webhookUrl}
-                  className="w-full px-4 py-3 text-xs bg-[#0B0F17] border border-[#1E2638] rounded-xl text-white font-mono select-all focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={copyWebhook}
-                  className="px-4 py-3 bg-[#1F2637] hover:bg-[#283248] text-white rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
-                >
-                  {copied ? <Check className="w-4 h-4 text-[#10B981]" /> : <Copy className="w-4 h-4" />}
-                  <span>{copied ? 'Copied' : 'Copy'}</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="p-4 bg-[#0B0F17] border border-[#1E2638] rounded-xl space-y-2 text-xs">
-              <span className="font-semibold text-white block">Signature verification</span>
-              <p className="text-[#6B7280] leading-relaxed">
-                Paystack webhooks are signed using HMAC-SHA512 against the raw HTTP request body with
-                timing-safe comparison to prevent race and tampering attacks.
-              </p>
-            </div>
-
-            {/* Yellow Action Button */}
-            <form onSubmit={handleTestGateway} className="pt-2">
-              <button
-                type="submit"
-                disabled={testing}
-                className="w-full py-3.5 text-sm font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
-              >
-                {testing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin text-black" />
-                    <span>Verifying gateway...</span>
-                  </>
-                ) : (
-                  <span>Verify payment gateway connection</span>
-                )}
-              </button>
-            </form>
-          </div>
-        </div>
+          <p className="mt-5 text-xs leading-5 text-[#6B7280]">
+            This uses a read-only Paystack request. It does not create a payment or reveal the server key.
+          </p>
+        </section>
       </div>
     </AdminLayout>
   );
