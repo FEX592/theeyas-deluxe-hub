@@ -55,6 +55,11 @@ export const api = {
   getAdminOrders: () => fetchJson<Order[]>('/api/admin/orders'),
   getAdminOrder: (id: string) => fetchJson<any>(`/api/admin/orders/${encodeURIComponent(id)}`),
   deleteOrder: (id: string) => fetchJson<{ success: boolean }>(`/api/admin/orders/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  downloadReceipt: async (id: string, format: 'pdf' | 'png') => {
+    const response = await fetch(`/api/admin/orders/${encodeURIComponent(id)}/receipt?format=${format}`, { credentials: 'same-origin', cache: 'no-store' });
+    if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error || 'Receipt download failed.');
+    return response.blob();
+  },
   fulfillOrder: (orderId: string, accessUrl: string, notes?: string) => fetchJson<any>(`/api/admin/orders/${encodeURIComponent(orderId)}/fulfill`, { method: 'POST', body: JSON.stringify({ access_url: accessUrl, notes }) }),
   resendAccessEmail: (orderId: string) => fetchJson<any>(`/api/admin/orders/${encodeURIComponent(orderId)}/resend-access`, { method: 'POST' }),
   getEmailTemplates: () => fetchJson<EmailTemplate[]>('/api/admin/emails/templates'),

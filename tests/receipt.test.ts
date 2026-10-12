@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildReceiptPdf } from '../server/brevo.ts';
+import { buildReceiptPdf, buildReceiptPng } from '../server/brevo.ts';
 import type { Order } from '../server/types.ts';
+import sharp from 'sharp';
 
 const order: Order = {
   id: 'ord-receipt-test',
@@ -30,4 +31,12 @@ test('builds a PDF receipt attachment with order recipient details', () => {
   assert.match(decoded, /Receipt Customer/);
   assert.match(decoded, /customer@example.com/);
   assert.match(decoded, /%%EOF$/);
+});
+
+test('builds a matching PNG receipt attachment', async () => {
+  const png = Buffer.from(await buildReceiptPng(order), 'base64');
+  assert.equal(png.toString('ascii', 1, 4), 'PNG');
+  const metadata = await sharp(png).metadata();
+  assert.equal(metadata.width, 612);
+  assert.equal(metadata.height, 792);
 });

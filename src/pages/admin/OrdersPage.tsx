@@ -37,42 +37,23 @@ export const OrdersPage: React.FC = () => {
     return true;
   });
 
-  const downloadAdminReceiptPng = (order: Order) => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1200;
-    canvas.height = 630;
-    const context = canvas.getContext('2d');
-    if (!context) return;
-    context.fillStyle = '#0A0D14';
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    context.fillStyle = '#7B2CBF';
-    context.globalAlpha = 0.24;
-    context.beginPath();
-    context.arc(1030, 110, 250, 0, Math.PI * 2);
-    context.fill();
-    context.globalAlpha = 1;
-    context.fillStyle = '#D6B36A';
-    context.font = '700 24px Arial';
-    context.fillText('THEEYA\'S DELUXE HUB · ADMIN RECEIPT', 64, 72);
-    context.fillStyle = '#FFFFFF';
-    context.font = '800 46px Arial';
-    context.fillText(order.customer_name, 64, 160);
-    context.fillStyle = '#E5E7EB';
-    context.font = '26px Arial';
-    context.fillText(order.customer_email, 64, 215);
-    context.fillText(`WhatsApp: ${order.whatsapp_number}`, 64, 260);
-    context.fillStyle = '#9CA3AF';
-    context.font = '22px Arial';
-    context.fillText(`Listing: ${order.listing_snapshot.name}`, 64, 350);
-    context.fillText(`Amount: ₦${(order.amount_kobo / 100).toLocaleString('en-NG')} · Payment: ${order.payment_status.toUpperCase()}`, 64, 390);
-    context.fillText(`Order: ${order.order_number} · Status: ${order.order_status.replace('_', ' ').toUpperCase()}`, 64, 430);
-    context.fillStyle = '#D6B36A';
-    context.font = '700 20px Arial';
-    context.fillText(`Generated ${new Date().toLocaleString('en-NG')}`, 64, 550);
-    const link = document.createElement('a');
-    link.download = `${order.order_number}-admin-receipt.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+  const downloadAdminReceipt = async (order: Order) => {
+    const choice = window.prompt('Download admin receipt as PDF or PNG?', 'PDF')?.trim().toLowerCase();
+    if (!choice) return;
+    if (choice !== 'pdf' && choice !== 'png') {
+      alert('Please enter PDF or PNG.');
+      return;
+    }
+    try {
+      const blob = await api.downloadReceipt(order.id, choice);
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${order.order_number}-receipt.${choice}`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    } catch (err: any) {
+      alert(err.message || 'Receipt download failed');
+    }
   };
 
   const handleDelete = async (order: Order) => {
@@ -211,7 +192,7 @@ export const OrdersPage: React.FC = () => {
                               <span>Inspect</span>
                               <ArrowRight className="w-3.5 h-3.5" />
                             </Link>
-                            <button onClick={() => downloadAdminReceiptPng(order)} className="p-1.5 text-[#9CA3AF] hover:text-white hover:bg-[#161C2C] rounded" title="Admin: download receipt PNG">
+                            <button onClick={() => downloadAdminReceipt(order)} className="p-1.5 text-[#9CA3AF] hover:text-white hover:bg-[#161C2C] rounded" title="Admin: download receipt as PDF or PNG">
                               <Download className="w-3.5 h-3.5" />
                             </button>
                             <button onClick={() => handleDelete(order)} className="p-1.5 text-red-400 hover:bg-red-950/50 rounded" title="Owner: permanently delete order">

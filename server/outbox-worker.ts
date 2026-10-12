@@ -1,5 +1,5 @@
 import { db } from './db.ts';
-import { brevo, buildReceiptPdf, renderTemplate } from './brevo.ts';
+import { brevo, buildReceiptPdf, buildReceiptPng, renderTemplate } from './brevo.ts';
 import { Order, OrderFulfillment } from './types.ts';
 
 export class OutboxWorker {
@@ -48,14 +48,18 @@ export class OutboxWorker {
         const orderForAttachment = job.event_key === 'payment.confirmed' && job.order_id
           ? db.getOrderById(job.order_id)
           : undefined;
+        const receiptAttachments = orderForAttachment
+          ? [
+              { name: `${orderForAttachment.order_number}-receipt.pdf`, content: buildReceiptPdf(orderForAttachment) },
+              { name: `${orderForAttachment.order_number}-receipt.png`, content: await buildReceiptPng(orderForAttachment) },
+            ]
+          : undefined;
 
         const result = await brevo.sendEmail({
           to: job.recipient,
           subject: job.rendered_subject,
           htmlContent: job.rendered_html,
-          attachments: orderForAttachment
-            ? [{ name: `${orderForAttachment.order_number}-receipt.pdf`, content: buildReceiptPdf(orderForAttachment) }]
-            : undefined,
+          attachments: receiptAttachments,
         });
 
         if (result.success) {

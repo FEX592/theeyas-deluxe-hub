@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { db } from './server/db.ts';
 import { matchesExpectedAmount, paystack } from './server/paystack.ts';
-import { brevo, renderTemplate } from './server/brevo.ts';
+import { brevo, buildReceiptPdf, buildReceiptPng, renderTemplate } from './server/brevo.ts';
 import { outboxWorker } from './server/outbox-worker.ts';
 import { authenticate, createAccount, createSession, deleteOwnAccount, destroySession, getSession, hasAdminAccount, isAuthConfigured } from './server/auth.ts';
 import { uploadListingCover } from './server/storage.ts';
@@ -671,6 +671,18 @@ app.get('/api/admin/orders/:id', (req: Request, res: Response) => {
     transactions,
     email_logs: emailLogs,
   });
+});
+
+app.get('/api/admin/orders/:id/receipt', async (req: Request, res: Response) => {
+  const order = db.getOrderById(req.params.id);
+  if (!order) return res.status(404).json({ error: 'Order not found' });
+  const format = String(req.query.format || 'pdf').toLowerCase();
+  if (format === 'png') {
+    res.type('png').set('Content-Disposition', `attachment; filename="${order.order_number}-receipt.png"`).send(Buffer.from(await buildReceiptPng(order), 'base64'));
+    return;
+  }
+  if (format !== 'pdf') return res.status(400).json({ error: 'Receipt format must be PDF or PNG.' });
+  res.type('pdf').set('Content-Disposition', `attachment; filename="${order.order_number}-receipt.pdf"`).send(Buffer.from(buildReceiptPdf(order), 'base64'));
 });
 
 // Admin Manual Fulfillment Completion
