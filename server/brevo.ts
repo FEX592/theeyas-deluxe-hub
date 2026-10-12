@@ -1,6 +1,7 @@
 import { db } from './db.ts';
 import { Order } from './types.ts';
 import sharp from 'sharp';
+import { readFileSync } from 'node:fs';
 
 export interface SendEmailParams {
   to: string;
@@ -49,13 +50,14 @@ function escapePdfText(value: string): string {
 function escapeXml(value: string): string {
   return String(value).replace(/[^\x20-\x7E]/g, '-').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 }
-
+const receiptFontBase64 = readFileSync(new URL('./assets/DejaVuSans.ttf', import.meta.url)).toString('base64');
 export function buildReceiptSvg(order: Order): string {
   const amount = `${order.currency} ${(order.amount_kobo / 100).toLocaleString('en-NG')}`;
   const paidAt = order.paid_at ? new Date(order.paid_at).toLocaleString('en-GB') : 'Pending';
-  const text = (value: string, x: number, y: number, size: number, fill: string, bold = false) => `<text x="${x}" y="${792 - y}" font-family="DejaVu Sans" font-size="${size}" font-weight="${bold ? 700 : 400}" fill="#${fill}">${escapeXml(value)}</text>`;
+  const text = (value: string, x: number, y: number, size: number, fill: string, bold = false) => `<text x="${x}" y="${792 - y}" font-family="ReceiptSans" font-size="${size}" font-weight="${bold ? 700 : 400}" fill="#${fill}">${escapeXml(value)}</text>`;
   const rect = (x: number, y: number, width: number, height: number, fill: string) => `<rect x="${x}" y="${792 - y - height}" width="${width}" height="${height}" fill="#${fill}"/>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="612" height="792" viewBox="0 0 612 792">
+  <style>@font-face { font-family: 'ReceiptSans'; src: url(data:font/ttf;base64,${receiptFontBase64}); } text { font-family: 'ReceiptSans'; }</style>
   ${rect(0, 0, 612, 792, 'FCFAF6')}
   ${rect(0, 690, 612, 102, '3D183F')}${rect(0, 688, 612, 2, 'D6B36A')}
   ${text('TDH', 54, 740, 18, 'FFFFFF', true)}${text("THEEYA'S DELUXE HUB", 108, 744, 18, 'FFFFFF', true)}
