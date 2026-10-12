@@ -4,7 +4,7 @@ import { api } from '../lib/api.ts';
 import { Order } from '../types.ts';
 import { Header } from '../components/Header.tsx';
 import { Footer } from '../components/Footer.tsx';
-import { Search, CheckCircle2, Clock, AlertCircle, MessageSquare, Loader2 } from 'lucide-react';
+import { Search, CheckCircle2, Clock, AlertCircle, MessageSquare, Loader2, RefreshCw } from 'lucide-react';
 
 export const TrackOrderPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -13,6 +13,7 @@ export const TrackOrderPage: React.FC = () => {
   const [orderId, setOrderId] = useState(initialOrderId);
   const [identifier, setIdentifier] = useState('');
   const [loading, setLoading] = useState(false);
+  const [reverifying, setReverifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [trackedOrder, setTrackedOrder] = useState<Order | null>(null);
   const [fulfillment, setFulfillment] = useState<{ access_url: string; fulfilled_at: string } | null>(null);
@@ -37,6 +38,26 @@ export const TrackOrderPage: React.FC = () => {
       setError(err.message || 'No matching order found. Please check your credentials.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleReverify = async () => {
+    if (!trackedOrder?.payment_reference) {
+      setError('No Paystack transaction reference is attached to this order.');
+      return;
+    }
+    setReverifying(true);
+    setError(null);
+    try {
+      const result = await api.verifyPayment(trackedOrder.payment_reference);
+      const refreshed = await api.trackOrder(orderId.trim(), identifier.trim());
+      setTrackedOrder(refreshed.order);
+      setFulfillment(refreshed.fulfillment);
+      if (!result.success) setError(result.message || 'Paystack has not confirmed this transaction yet.');
+    } catch (err: any) {
+      setError(err.message || 'Payment could not be re-verified. Please try again.');
+    } finally {
+      setReverifying(false);
     }
   };
 
@@ -253,6 +274,15 @@ export const TrackOrderPage: React.FC = () => {
                 <p>
                   Payment has not yet been confirmed by Paystack. Once paid, the order will progress to fulfillment.
                 </p>
+                <button
+                  type="button"
+                  onClick={handleReverify}
+                  disabled={reverifying}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#FACC15]/50 px-3 py-2 font-semibold text-[#FACC15] hover:bg-[#FACC15]/10 disabled:opacity-60"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${reverifying ? 'animate-spin' : ''}`} />
+                  {reverifying ? 'Re-checking Paystack...' : 'Re-check payment'}
+                </button>
               </div>
             )}
           </div>

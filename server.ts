@@ -596,6 +596,7 @@ app.get('/api/orders/track', (req: Request, res: Response) => {
       created_at: order.created_at,
       paid_at: order.paid_at,
       completed_at: order.completed_at,
+      payment_reference: db.getAllTransactions().find((transaction) => transaction.order_id === order.id)?.reference || null,
     },
     fulfillment: fulfillment ? { access_url: fulfillment.access_url, fulfilled_at: fulfillment.fulfilled_at } : null,
   });

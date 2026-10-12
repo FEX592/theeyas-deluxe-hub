@@ -93,6 +93,7 @@ export interface Order {
   updated_at: string;
   paid_at: string | null;
   completed_at: string | null;
+  payment_reference?: string | null;
 }
 
 export interface OrderFulfillment {
