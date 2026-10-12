@@ -1191,7 +1191,7 @@ class Database {
 
   // --- Listings (PUBLIC SAFE) ---
   getPublicListings(): Listing[] {
-    return this.data.listings.filter((l) => l.status === 'published');
+    return this.data.listings.filter((l) => l.status === 'published' && l.availability === 'available');
   }
 
   getAllListings(): Listing[] {
@@ -1199,11 +1199,20 @@ class Database {
   }
 
   getListingBySlug(slug: string): Listing | undefined {
-    return this.data.listings.find((l) => l.slug === slug);
+    return this.data.listings.find((l) => l.slug === slug && l.status === 'published' && l.availability === 'available');
   }
 
   getListingById(id: string): Listing | undefined {
     return this.data.listings.find((l) => l.id === id);
+  }
+
+  private removeListingFromInventory(id: string, actorEmail: string): boolean {
+    const idx = this.data.listings.findIndex((l) => l.id === id);
+    if (idx < 0) return false;
+    this.data.listings.splice(idx, 1);
+    this.data.private_links = this.data.private_links.filter((p) => p.listing_id !== id);
+    this.addAuditLog(actorEmail, 'listing.deleted', 'listing', id, 'Permanently removed one-time listing after successful fulfillment');
+    return true;
   }
 
   getListingPrivateLink(listingId: string): ListingPrivateLink | undefined {
@@ -1280,12 +1289,7 @@ class Database {
   }
 
   deleteListing(id: string, actorEmail: string): boolean {
-    const idx = this.data.listings.findIndex((l) => l.id === id);
-    if (idx >= 0) {
-      this.data.listings.splice(idx, 1);
-      const pIdx = this.data.private_links.findIndex((p) => p.listing_id === id);
-      if (pIdx >= 0) this.data.private_links.splice(pIdx, 1);
-      this.addAuditLog(actorEmail, 'listing.deleted', 'listing', id, 'Deleted listing');
+    if (this.removeListingFromInventory(id, actorEmail)) {
       this.save();
       return true;
     }
@@ -1411,6 +1415,9 @@ class Database {
       } else {
         this.data.fulfillments.push(fulfillment);
       }
+      // Preserve the order snapshot and fulfillment record, but remove the
+      // one-time listing and private link from all future inventory queries.
+      this.removeListingFromInventory(order.listing_id, 'system:automatic');
       autoFulfilled = true;
     } else {
       order.order_status = 'processing';
@@ -1459,6 +1466,8 @@ class Database {
       this.data.fulfillments.push(fulfillment);
     }
 
+    this.removeListingFromInventory(order.listing_id, actorEmail);
+
     this.addAuditLog(actorEmail, 'order.fulfilled', 'order', order.id, `Manual fulfillment completed by ${actorEmail}`);
     this.save();
     return order;
@@ -1466,6 +1475,11 @@ class Database {
 
   // --- Transactions ---
   recordTransaction(tx: Omit<PaymentTransaction, 'id' | 'created_at'>): PaymentTransaction {
+    const existing = this.getTransactionByReference(tx.reference);
+    if (existing) {
+      if (existing.order_id !== tx.order_id) throw new Error('Payment reference is already assigned to another order.');
+      return existing;
+    }
     const newTx: PaymentTransaction = {
       id: 'tx-' + crypto.randomUUID().slice(0, 8),
       created_at: new Date().toISOString(),

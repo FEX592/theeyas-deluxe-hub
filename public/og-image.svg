@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Theeya's Deluxe Hub</title>
+  <desc id="desc">Curated WhatsApp communities</desc>
+  <rect width="1200" height="630" fill="#0A0D14"/>
+  <circle cx="1030" cy="110" r="250" fill="#7B2CBF" opacity="0.18"/>
+  <circle cx="170" cy="570" r="280" fill="#9D4EDD" opacity="0.12"/>
+  <g transform="translate(150 170) scale(2.2)">
+    <path d="M0 16 H44 V26 H26 V56 H14 V26 H0 Z" fill="#9D4EDD"/>
+    <path d="M30 4 L34 11 L39 4 L44 11 L48 4 L47 14 H31 Z" fill="#D6B36A"/>
+    <path d="M22 16 H44 C56 16 64 24 64 36 C64 48 56 56 44 56 H22 Z" fill="#7B2CBF"/>
+    <path d="M30 26 H42 C46 26 49 29 49 33 C49 37 46 40 42 40 H36 L32 44 V40 H30 C28 40 27 38 27 36 V30 C27 28 28 26 30 26 Z" fill="#FCFAF6"/>
+    <circle cx="34" cy="33" r="1.5" fill="#D6B36A"/><circle cx="38" cy="33" r="1.5" fill="#D6B36A"/><circle cx="42" cy="33" r="1.5" fill="#D6B36A"/>
+    <path d="M48 37 C54 36 58 32 66 31 C72 30 76 33 80 34 L78 28 C74 27 70 25 64 26 C56 27 52 32 46 33 Z" fill="#D6B36A"/>
+    <path d="M72 16 H84 V31 H94 V16 H106 V56 H94 V41 H84 V56 H72 Z" fill="#5A189A"/>
+  </g>
+  <text x="430" y="285" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="68" font-weight="800" letter-spacing="4">THEEYA'S</text>
+  <text x="435" y="355" fill="#D6B36A" font-family="Arial, sans-serif" font-size="31" font-weight="700" letter-spacing="9">DELUXE HUB</text>
+  <line x1="435" y1="390" x2="980" y2="390" stroke="#D6B36A" stroke-width="2" opacity="0.7"/>
+  <text x="435" y="445" fill="#E5E7EB" font-family="Arial, sans-serif" font-size="27">Curated WhatsApp communities</text>
+</svg>

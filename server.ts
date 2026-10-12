@@ -73,6 +73,22 @@ app.use((req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   next();
 });
 
+// Public crawler endpoints are generated from the same inventory source as
+// the storefront, so permanently removed listings cannot remain indexable.
+app.get('/robots.txt', (_req: Request, res: Response) => {
+  const canonical = db.getSettings().canonical_url.replace(/\/$/, '');
+  res.type('text/plain').set('Cache-Control', 'public, max-age=300').send(
+    `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin/\nDisallow: /account/\nDisallow: /checkout/\nDisallow: /order-confirmation/\nDisallow: /orders/\nDisallow: /track-order/\nSitemap: ${canonical}/sitemap.xml\n`,
+  );
+});
+
+app.get('/sitemap.xml', (_req: Request, res: Response) => {
+  const canonical = db.getSettings().canonical_url.replace(/\/$/, '');
+  const urls = [canonical, `${canonical}/marketplace`, ...db.getPublicListings().map((listing) => `${canonical}/marketplace/${encodeURIComponent(listing.slug)}`)];
+  const body = urls.map((url) => `  <url><loc>${url}</loc></url>`).join('\n');
+  res.type('application/xml').set('Cache-Control', 'no-store, max-age=0').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>`);
+});
+
 // ==========================================
 // API ROUTES
 // ==========================================
@@ -369,7 +385,7 @@ app.post('/api/payments/initialize', async (req: Request, res: Response) => {
     }
 
     const listing = db.getListingById(listing_id);
-    if (!listing || listing.status !== 'published') {
+    if (!listing || listing.status !== 'published' || listing.availability !== 'available') {
       return res.status(400).json({ error: 'Listing is not available for purchase' });
     }
 
