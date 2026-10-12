@@ -850,7 +850,10 @@ class Database {
         console.log('[Supabase] Loaded durable application state.');
         return remote[0].state as StoreData;
       }
-      throw new Error('Durable Supabase application state could not be read; refusing to initialize or overwrite production data.');
+      if (remote === null || (Array.isArray(remote) && remote.length > 0)) {
+        throw new Error('Durable Supabase application state could not be read; refusing to initialize or overwrite production data.');
+      }
+      console.info('[Supabase] No durable application state row exists; initializing the first store snapshot.');
     }
 
     try {
