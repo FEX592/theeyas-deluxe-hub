@@ -37,7 +37,7 @@ export const OrdersPage: React.FC = () => {
     return true;
   });
 
-  const downloadRecipientPng = (order: Order) => {
+  const downloadAdminReceiptPng = (order: Order) => {
     const canvas = document.createElement('canvas');
     canvas.width = 1200;
     canvas.height = 630;
@@ -53,7 +53,7 @@ export const OrdersPage: React.FC = () => {
     context.globalAlpha = 1;
     context.fillStyle = '#D6B36A';
     context.font = '700 24px Arial';
-    context.fillText('THEEYA\'S DELUXE HUB · ORDER RECIPIENT', 64, 72);
+    context.fillText('THEEYA\'S DELUXE HUB · ADMIN RECEIPT', 64, 72);
     context.fillStyle = '#FFFFFF';
     context.font = '800 46px Arial';
     context.fillText(order.customer_name, 64, 160);
@@ -64,13 +64,13 @@ export const OrdersPage: React.FC = () => {
     context.fillStyle = '#9CA3AF';
     context.font = '22px Arial';
     context.fillText(`Listing: ${order.listing_snapshot.name}`, 64, 350);
-    context.fillText(`Order: ${order.order_number}`, 64, 390);
-    context.fillText(`Status: ${order.order_status.replace('_', ' ').toUpperCase()}`, 64, 430);
+    context.fillText(`Amount: ₦${(order.amount_kobo / 100).toLocaleString('en-NG')} · Payment: ${order.payment_status.toUpperCase()}`, 64, 390);
+    context.fillText(`Order: ${order.order_number} · Status: ${order.order_status.replace('_', ' ').toUpperCase()}`, 64, 430);
     context.fillStyle = '#D6B36A';
     context.font = '700 20px Arial';
     context.fillText(`Generated ${new Date().toLocaleString('en-NG')}`, 64, 550);
     const link = document.createElement('a');
-    link.download = `${order.order_number}-recipient.png`;
+    link.download = `${order.order_number}-admin-receipt.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
   };
@@ -211,7 +211,7 @@ export const OrdersPage: React.FC = () => {
                               <span>Inspect</span>
                               <ArrowRight className="w-3.5 h-3.5" />
                             </Link>
-                            <button onClick={() => downloadRecipientPng(order)} className="p-1.5 text-[#9CA3AF] hover:text-white hover:bg-[#161C2C] rounded" title="Download recipient PNG">
+                            <button onClick={() => downloadAdminReceiptPng(order)} className="p-1.5 text-[#9CA3AF] hover:text-white hover:bg-[#161C2C] rounded" title="Admin: download receipt PNG">
                               <Download className="w-3.5 h-3.5" />
                             </button>
                             <button onClick={() => handleDelete(order)} className="p-1.5 text-red-400 hover:bg-red-950/50 rounded" title="Owner: permanently delete order">
