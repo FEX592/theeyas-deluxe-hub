@@ -400,12 +400,16 @@ app.post('/api/payments/initialize', async (req: Request, res: Response) => {
       },
     });
 
+    if (paystackResult.reference !== reference) {
+      throw new Error('Payment provider returned a mismatched transaction reference.');
+    }
+
     // 4. Record payment transaction record
     db.recordTransaction({
       order_id: order.id,
       provider: 'paystack',
-      environment: paystackResult.simulated ? 'test' : 'live',
-      reference,
+      environment: 'live',
+      reference: paystackResult.reference,
       provider_reference: paystackResult.access_code,
       amount_kobo: order.amount_kobo,
       currency: order.currency,
@@ -426,8 +430,7 @@ app.post('/api/payments/initialize', async (req: Request, res: Response) => {
       order_number: order.order_number,
       tracking_token,
       authorization_url: paystackResult.authorization_url,
-      reference,
-      simulated: paystackResult.simulated,
+      reference: paystackResult.reference,
     });
   } catch (err: any) {
     console.error('Checkout error:', err);
@@ -448,19 +451,19 @@ app.get('/api/payments/verify', async (req: Request, res: Response) => {
     const verifyResult = await paystack.verifyTransaction(reference);
 
     if (verifyResult.status === 'success') {
-      if (verifyResult.reference !== reference || verifyResult.amount_kobo !== tx.amount_kobo || verifyResult.currency !== tx.currency) {
+      if (verifyResult.reference !== reference || verifyResult.amount_kobo !== tx.amount_kobo || verifyResult.currency.toUpperCase() !== tx.currency.toUpperCase()) {
         return res.status(409).json({ error: 'Paystack verification does not match the local transaction.' });
       }
-      const wasPaid = db.getOrderById(tx.order_id)?.payment_status === 'paid';
-      // Mark order paid, and auto-fulfill if automatic listing
-      const { order, autoFulfilled } = db.markOrderPaid(tx.order_id, reference);
+      // Mark order paid, and auto-fulfill if automatic listing. The changed flag
+      // keeps repeated callbacks from creating duplicate fulfillment events.
+      const { order, autoFulfilled, changed } = db.markOrderPaid(tx.order_id, reference);
       db.markTransactionVerified(reference, verifyResult.reference);
 
-      // Enqueue payment confirmed receipt email
-      if (!wasPaid) outboxWorker.enqueueOrderEvent('payment.confirmed', order);
+      // Enqueue payment confirmed receipt email only on the state transition.
+      if (changed) outboxWorker.enqueueOrderEvent('payment.confirmed', order);
 
       // If automatically fulfilled, enqueue access delivery email immediately
-      if (autoFulfilled && !wasPaid) {
+      if (autoFulfilled && changed) {
         const fulfillment = db.getOrderFulfillment(order.id);
         outboxWorker.enqueueOrderEvent('order.completed', order, fulfillment);
       }
@@ -475,7 +478,7 @@ app.get('/api/payments/verify', async (req: Request, res: Response) => {
       });
     } else {
       const order = db.getOrderById(tx.order_id);
-      if (order && order.payment_status !== 'paid') {
+      if (order && order.payment_status !== 'paid' && (verifyResult.status === 'failed' || verifyResult.status === 'abandoned')) {
         outboxWorker.enqueueOrderEvent('payment.failed', order);
       }
       return res.json({
@@ -485,7 +488,9 @@ app.get('/api/payments/verify', async (req: Request, res: Response) => {
       });
     }
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    const message = err?.message || 'Payment verification failed.';
+    const invalidReference = message.startsWith('Invalid Paystack transaction reference');
+    res.status(invalidReference ? 400 : 502).json({ error: message, retryable: !invalidReference });
   }
 });
 
@@ -508,19 +513,17 @@ app.post('/api/payments/webhooks/paystack', async (req: any, res: Response) => {
     const reference = typeof data?.reference === 'string' ? data.reference : '';
     if (!reference) return res.status(400).send('Malformed Paystack event');
     const tx = db.getTransactionByReference(reference);
-    if (tx) {
-      const verifyResult = await paystack.verifyTransaction(reference);
-      if (verifyResult.status !== 'success' || verifyResult.reference !== reference || verifyResult.amount_kobo !== tx.amount_kobo || verifyResult.currency !== tx.currency) {
-        return res.status(400).send('Payment verification mismatch');
-      }
-      const wasPaid = db.getOrderById(tx.order_id)?.payment_status === 'paid';
-      const { order, autoFulfilled } = db.markOrderPaid(tx.order_id, reference);
-      db.markTransactionVerified(reference, verifyResult.reference);
-      if (!wasPaid) outboxWorker.enqueueOrderEvent('payment.confirmed', order);
-      if (autoFulfilled && !wasPaid) {
-        const fulfillment = db.getOrderFulfillment(order.id);
-        outboxWorker.enqueueOrderEvent('order.completed', order, fulfillment);
-      }
+    if (!tx) return res.status(400).send('Unknown payment reference');
+    const verifyResult = await paystack.verifyTransaction(reference);
+    if (verifyResult.status !== 'success' || verifyResult.reference !== reference || verifyResult.amount_kobo !== tx.amount_kobo || verifyResult.currency.toUpperCase() !== tx.currency.toUpperCase()) {
+      return res.status(400).send('Payment verification mismatch');
+    }
+    const { order, autoFulfilled, changed } = db.markOrderPaid(tx.order_id, reference);
+    db.markTransactionVerified(reference, verifyResult.reference);
+    if (changed) outboxWorker.enqueueOrderEvent('payment.confirmed', order);
+    if (autoFulfilled && changed) {
+      const fulfillment = db.getOrderFulfillment(order.id);
+      outboxWorker.enqueueOrderEvent('order.completed', order, fulfillment);
     }
   }
 

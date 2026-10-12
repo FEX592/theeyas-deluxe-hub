@@ -1375,12 +1375,12 @@ class Database {
     return null;
   }
 
-  markOrderPaid(orderId: string, transactionReference: string): { order: Order; autoFulfilled: boolean } {
+  markOrderPaid(orderId: string, transactionReference: string): { order: Order; autoFulfilled: boolean; changed: boolean } {
     const order = this.getOrderById(orderId);
     if (!order) throw new Error('Order not found');
 
     if (order.payment_status === 'paid') {
-      return { order, autoFulfilled: order.order_status === 'completed' };
+      return { order, autoFulfilled: order.order_status === 'completed', changed: false };
     }
 
     const now = new Date().toISOString();
@@ -1424,7 +1424,7 @@ class Database {
       `Payment verified for ${order.order_number} ref: ${transactionReference}`
     );
     this.save();
-    return { order, autoFulfilled };
+    return { order, autoFulfilled, changed: true };
   }
 
   completeOrderManualFulfillment(orderId: string, accessUrl: string, actorEmail: string, notes?: string): Order {
