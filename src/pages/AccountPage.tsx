@@ -5,13 +5,35 @@ import { api } from '../lib/api.ts';
 import { Order } from '../types.ts';
 import { Header } from '../components/Header.tsx';
 import { Footer } from '../components/Footer.tsx';
-import { User, Package, ArrowRight, LogOut, Key } from 'lucide-react';
+import { User, Package, ArrowRight, LogOut, Key, Trash2, AlertCircle } from 'lucide-react';
 
 export const AccountPage: React.FC = () => {
   const navigate = useNavigate();
-  const { profile, logout } = useAuth();
+  const { profile, logout, deleteAccount } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showDelete, setShowDelete] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deletePhrase, setDeletePhrase] = useState('');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (deletePhrase !== 'DELETE') {
+      setDeleteError('Type DELETE to confirm account deletion.');
+      return;
+    }
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteAccount(deletePassword);
+      navigate('/', { replace: true });
+    } catch (err: any) {
+      setDeleteError(err.message || 'Account deletion failed.');
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     if (!profile) return;
@@ -166,6 +188,39 @@ export const AccountPage: React.FC = () => {
             )}
           </div>
         </div>
+
+        <section className="mt-8 rounded-2xl border border-red-900/50 bg-[#111622] p-6">
+          <h2 className="font-display font-bold text-sm text-red-300">Delete Account</h2>
+          <p className="mt-2 text-xs leading-relaxed text-[#9CA3AF]">
+            This permanently removes your login and signs out all sessions. Your existing orders are retained in order history.
+            The last owner account cannot be deleted.
+          </p>
+          {!showDelete ? (
+            <button
+              type="button"
+              onClick={() => { setShowDelete(true); setDeleteError(null); }}
+              className="mt-4 px-4 py-2 text-xs font-semibold text-red-300 border border-red-900/60 hover:bg-red-950/40 rounded-xl inline-flex items-center gap-2"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Delete Account
+            </button>
+          ) : (
+            <form onSubmit={handleDeleteAccount} className="mt-4 max-w-md space-y-3">
+              {deleteError && <div className="rounded-lg border border-red-800 bg-red-950/50 p-3 text-xs text-red-300 flex gap-2"><AlertCircle className="w-4 h-4 shrink-0" />{deleteError}</div>}
+              <label className="block text-xs text-[#9CA3AF]">
+                Current password
+                <input type="password" required autoComplete="current-password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} className="mt-1 w-full px-3.5 py-2.5 text-sm bg-[#0B0F17] border border-[#1E2638] rounded-xl text-white" />
+              </label>
+              <label className="block text-xs text-[#9CA3AF]">
+                Type <span className="font-mono font-bold text-white">DELETE</span> to confirm
+                <input type="text" required value={deletePhrase} onChange={(e) => setDeletePhrase(e.target.value)} className="mt-1 w-full px-3.5 py-2.5 text-sm bg-[#0B0F17] border border-[#1E2638] rounded-xl text-white" />
+              </label>
+              <div className="flex gap-3">
+                <button type="button" disabled={deleting} onClick={() => { setShowDelete(false); setDeletePassword(''); setDeletePhrase(''); setDeleteError(null); }} className="px-4 py-2 text-xs font-semibold text-white border border-[#1E2638] rounded-xl disabled:opacity-60">Cancel</button>
+                <button type="submit" disabled={deleting || deletePhrase !== 'DELETE'} className="px-4 py-2 text-xs font-bold text-white bg-red-700 hover:bg-red-600 rounded-xl disabled:opacity-50">{deleting ? 'Deleting…' : 'Permanently Delete Account'}</button>
+              </div>
+            </form>
+          )}
+        </section>
       </main>
 
       <Footer />

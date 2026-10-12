@@ -15,6 +15,15 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   return response.json();
 }
 
+async function fileToBase64(file: File): Promise<string> {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  let binary = '';
+  for (let offset = 0; offset < bytes.length; offset += 8192) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192));
+  }
+  return btoa(binary);
+}
+
 export const api = {
   getConfig: () => fetchJson<{ store_name: string; currency: string; support_email: string; support_whatsapp: string; bootstrap_claimed: boolean }>('/api/config'),
   getHealth: () => fetchJson<{ status: string; auth_configured: boolean; has_admin_account: boolean; brevo_configured: boolean; paystack_configured: boolean; outbox_pending_jobs: number; bootstrap_claimed: boolean }>('/api/health'),
@@ -23,6 +32,7 @@ export const api = {
   signup: (email: string, displayName: string, password: string) => fetchJson<{ success: boolean; first_account: boolean; profile: Profile }>('/api/auth/signup', { method: 'POST', body: JSON.stringify({ email, displayName, password }) }),
   getMe: () => fetchJson<{ profile: Profile | null; authenticated: boolean; has_admin: boolean }>('/api/auth/session'),
   logout: () => fetchJson<{ success: boolean }>('/api/auth/logout', { method: 'POST' }),
+  deleteAccount: (password: string) => fetchJson<{ success: boolean }>('/api/auth/account', { method: 'DELETE', body: JSON.stringify({ password }) }),
   getCategories: () => fetchJson<Category[]>('/api/categories'),
   getAdminCategories: () => fetchJson<Category[]>('/api/admin/categories'),
   saveCategory: (category: Partial<Category>) => fetchJson<Category>('/api/admin/categories', { method: 'POST', body: JSON.stringify(category) }),
@@ -33,6 +43,7 @@ export const api = {
   getAdminListing: (id: string) => fetchJson<Listing>(`/api/admin/listings/${encodeURIComponent(id)}`),
   saveListing: (listing: Partial<Listing>) => fetchJson<Listing>('/api/admin/listings', { method: 'POST', body: JSON.stringify(listing) }),
   deleteListing: (id: string) => fetchJson<{ success: boolean }>(`/api/admin/listings/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  uploadListingCover: async (file: File) => fetchJson<{ url: string }>('/api/admin/listing-covers', { method: 'POST', body: JSON.stringify({ mime_type: file.type, data_base64: await fileToBase64(file) }) }),
   smartImport: (url: string) => fetchJson<any>('/api/admin/listings/smart-import', { method: 'POST', body: JSON.stringify({ url }) }),
   initializePayment: (data: { listing_id: string; customer_name: string; customer_email: string; whatsapp_number: string; user_id?: string }) => fetchJson<any>('/api/payments/initialize', { method: 'POST', body: JSON.stringify(data) }),
   verifyPayment: (reference: string) => fetchJson<any>(`/api/payments/verify?reference=${encodeURIComponent(reference)}`),
