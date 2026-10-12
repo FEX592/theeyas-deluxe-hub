@@ -451,8 +451,21 @@ app.get('/api/payments/verify', async (req: Request, res: Response) => {
     const verifyResult = await paystack.verifyTransaction(reference);
 
     if (verifyResult.status === 'success') {
-      if (verifyResult.reference !== reference || verifyResult.amount_kobo !== tx.amount_kobo || verifyResult.currency.toUpperCase() !== tx.currency.toUpperCase()) {
-        return res.status(409).json({ error: 'Paystack verification does not match the local transaction.' });
+      const mismatches: string[] = [];
+      if (verifyResult.reference !== reference) mismatches.push('reference');
+      if (verifyResult.amount_kobo !== tx.amount_kobo) mismatches.push('amount');
+      if (verifyResult.currency.toUpperCase() !== tx.currency.toUpperCase()) mismatches.push('currency');
+      if (mismatches.length) {
+        console.warn('[Payment] Paystack/local transaction mismatch', {
+          reference,
+          provider_reference: verifyResult.reference,
+          local_amount_kobo: tx.amount_kobo,
+          provider_amount_kobo: verifyResult.amount_kobo,
+          local_currency: tx.currency,
+          provider_currency: verifyResult.currency,
+          mismatches,
+        });
+        return res.status(409).json({ error: `Paystack verification does not match the local transaction (${mismatches.join(', ')}).` });
       }
       // Mark order paid, and auto-fulfill if automatic listing. The changed flag
       // keeps repeated callbacks from creating duplicate fulfillment events.
