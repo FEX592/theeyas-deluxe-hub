@@ -13,6 +13,10 @@ async function service() {
   return (await import('../server/paystack.ts?payment-test=' + Math.random())).PaystackService;
 }
 
+async function amountMatcher() {
+  return (await import('../server/paystack.ts?payment-test=' + Math.random())).matchesExpectedAmount;
+}
+
 beforeEach(() => { process.env.PAYSTACK_SECRET_KEY = 'sk_test_for_unit_tests'; });
 afterEach(() => {
   globalThis.fetch = originalFetch;
@@ -43,9 +47,36 @@ test('accepts only an exact real-provider verification response', async () => {
   const PaystackService = await service();
   const result = await new PaystackService().verifyTransaction(reference);
   assert.deepEqual(result, {
-    status: 'success', reference, amount_kobo: 125000, currency: 'NGN',
+    status: 'success', reference, amount_kobo: 125000, requested_amount_kobo: undefined, fees_kobo: undefined, currency: 'NGN',
     paid_at: undefined, gateway_response: 'Successful', channel: undefined,
   });
+});
+
+test('accepts Paystack fee-inclusive amount only when requested amount and provider fee reconcile exactly', async () => {
+  globalThis.fetch = async () => response({ status: true, data: {
+    status: 'success', reference, amount: 50762, requested_amount: 50000, fees: 762, currency: 'NGN',
+  } });
+  const PaystackService = await service();
+  const verify = await new PaystackService().verifyTransaction(reference);
+  const matchesExpectedAmount = await amountMatcher();
+
+  assert.equal(verify.amount_kobo, 50762);
+  assert.equal(verify.requested_amount_kobo, 50000);
+  assert.equal(verify.fees_kobo, 762);
+  assert.equal(matchesExpectedAmount(50000, verify), true);
+  assert.equal(matchesExpectedAmount(50001, verify), false);
+  assert.equal(matchesExpectedAmount(50000, { ...verify, fees_kobo: 761 }), false);
+  assert.equal(matchesExpectedAmount(50000, { ...verify, requested_amount_kobo: 49238 }), false);
+});
+
+test('continues to accept an exact provider amount without a fee adjustment', async () => {
+  const matchesExpectedAmount = await amountMatcher();
+  assert.equal(matchesExpectedAmount(125000, {
+    status: 'success', reference, amount_kobo: 125000, currency: 'NGN',
+  }), true);
+  assert.equal(matchesExpectedAmount(125000, {
+    status: 'success', reference, amount_kobo: 124999, currency: 'NGN',
+  }), false);
 });
 
 test('returns failed and pending provider states without treating them as paid', async () => {

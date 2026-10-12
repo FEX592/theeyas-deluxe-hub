@@ -3,7 +3,7 @@ import path from 'path';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { db } from './server/db.ts';
-import { paystack } from './server/paystack.ts';
+import { matchesExpectedAmount, paystack } from './server/paystack.ts';
 import { brevo, renderTemplate } from './server/brevo.ts';
 import { outboxWorker } from './server/outbox-worker.ts';
 import { authenticate, createAccount, createSession, deleteOwnAccount, destroySession, getSession, hasAdminAccount, isAuthConfigured } from './server/auth.ts';
@@ -453,7 +453,7 @@ app.get('/api/payments/verify', async (req: Request, res: Response) => {
     if (verifyResult.status === 'success') {
       const mismatches: string[] = [];
       if (verifyResult.reference !== reference) mismatches.push('reference');
-      if (verifyResult.amount_kobo !== tx.amount_kobo) mismatches.push('amount');
+      if (!matchesExpectedAmount(tx.amount_kobo, verifyResult)) mismatches.push('amount');
       if (verifyResult.currency.toUpperCase() !== tx.currency.toUpperCase()) mismatches.push('currency');
       if (mismatches.length) {
         console.warn('[Payment] Paystack/local transaction mismatch', {
@@ -461,6 +461,8 @@ app.get('/api/payments/verify', async (req: Request, res: Response) => {
           provider_reference: verifyResult.reference,
           local_amount_kobo: tx.amount_kobo,
           provider_amount_kobo: verifyResult.amount_kobo,
+          provider_requested_amount_kobo: verifyResult.requested_amount_kobo,
+          provider_fees_kobo: verifyResult.fees_kobo,
           local_currency: tx.currency,
           provider_currency: verifyResult.currency,
           mismatches,
@@ -528,7 +530,7 @@ app.post('/api/payments/webhooks/paystack', async (req: any, res: Response) => {
     const tx = db.getTransactionByReference(reference);
     if (!tx) return res.status(400).send('Unknown payment reference');
     const verifyResult = await paystack.verifyTransaction(reference);
-    if (verifyResult.status !== 'success' || verifyResult.reference !== reference || verifyResult.amount_kobo !== tx.amount_kobo || verifyResult.currency.toUpperCase() !== tx.currency.toUpperCase()) {
+    if (verifyResult.status !== 'success' || verifyResult.reference !== reference || !matchesExpectedAmount(tx.amount_kobo, verifyResult) || verifyResult.currency.toUpperCase() !== tx.currency.toUpperCase()) {
       return res.status(400).send('Payment verification mismatch');
     }
     const { order, autoFulfilled, changed } = db.markOrderPaid(tx.order_id, reference);

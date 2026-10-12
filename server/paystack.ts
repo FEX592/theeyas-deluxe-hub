@@ -21,10 +21,24 @@ export interface PaystackVerifyResult {
   status: 'success' | 'failed' | 'abandoned' | 'pending';
   reference: string;
   amount_kobo: number;
+  requested_amount_kobo?: number;
+  fees_kobo?: number;
   currency: string;
   paid_at?: string;
   gateway_response?: string;
   channel?: string;
+}
+
+export function matchesExpectedAmount(expectedAmountKobo: number, verification: PaystackVerifyResult): boolean {
+  if (!Number.isSafeInteger(expectedAmountKobo) || expectedAmountKobo <= 0) return false;
+  if (!Number.isSafeInteger(verification.amount_kobo) || verification.amount_kobo <= 0) return false;
+  if (verification.amount_kobo === expectedAmountKobo) return true;
+
+  const { amount_kobo, requested_amount_kobo, fees_kobo } = verification;
+  if (typeof requested_amount_kobo !== 'number' || typeof fees_kobo !== 'number') return false;
+  if (!Number.isSafeInteger(requested_amount_kobo) || !Number.isSafeInteger(fees_kobo) || fees_kobo <= 0) return false;
+  return requested_amount_kobo === expectedAmountKobo
+    && amount_kobo === requested_amount_kobo + fees_kobo;
 }
 
 export class PaystackService {
@@ -108,6 +122,8 @@ export class PaystackService {
       const providerStatus = txData.status === 'success' ? 'success' : txData.status === 'failed' ? 'failed' : txData.status === 'abandoned' ? 'abandoned' : 'pending';
       return {
         status: providerStatus, reference: txData.reference, amount_kobo: txData.amount, currency: txData.currency,
+        requested_amount_kobo: Number.isSafeInteger(txData.requested_amount) ? txData.requested_amount : undefined,
+        fees_kobo: Number.isSafeInteger(txData.fees) && txData.fees >= 0 ? txData.fees : undefined,
         paid_at: txData.paid_at, gateway_response: txData.gateway_response, channel: txData.channel,
       };
     } catch (err: any) {
