@@ -548,6 +548,11 @@ app.get('/api/payments/providers', (_req: Request, res: Response) => {
   });
 });
 
+app.get('/api/admin/payments/status', async (_req: Request, res: Response) => {
+  res.set('Cache-Control', 'no-store, max-age=0');
+  res.json(await paystack.checkConnection());
+});
+
 app.post('/api/admin/payments/settings', (req: Request, res: Response) => {
   try {
     const actorEmail = getActorEmail(req);

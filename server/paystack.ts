@@ -34,6 +34,35 @@ export class PaystackService {
     return process.env.PAYSTACK_SECRET_KEY || null;
   }
 
+  async checkConnection(): Promise<{ active: boolean; message: string }> {
+    const secretKey = this.getSecretKey();
+    if (!secretKey) {
+      return { active: false, message: 'Paystack API key is not configured on the server.' };
+    }
+
+    try {
+      const response = await fetch('https://api.paystack.co/bank?country=nigeria&perPage=1', {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${secretKey}` },
+        signal: AbortSignal.timeout(8000),
+      });
+      const data = await response.json().catch(() => null);
+      if (response.ok && data?.status === true) {
+        return { active: true, message: 'Paystack API is reachable and accepted the server API key.' };
+      }
+      if (response.status === 401 || response.status === 403) {
+        return { active: false, message: 'Paystack rejected the server API key. Check that it is valid.' };
+      }
+      return { active: false, message: `Paystack responded, but the check failed (HTTP ${response.status}).` };
+    } catch (error) {
+      const timedOut = error instanceof Error && error.name === 'TimeoutError';
+      return {
+        active: false,
+        message: timedOut ? 'The Paystack API check timed out. Try again.' : 'Could not connect to Paystack. Check the server connection and try again.',
+      };
+    }
+  }
+
   async initializeTransaction(params: PaystackInitParams): Promise<PaystackInitResult> {
     const secretKey = this.getSecretKey();
     const providerConfig = db.getProviderConfig();

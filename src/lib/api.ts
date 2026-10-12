@@ -48,6 +48,7 @@ export const api = {
   initializePayment: (data: { listing_id: string; customer_name: string; customer_email: string; whatsapp_number: string; user_id?: string }) => fetchJson<any>('/api/payments/initialize', { method: 'POST', body: JSON.stringify(data) }),
   verifyPayment: (reference: string) => fetchJson<any>(`/api/payments/verify?reference=${encodeURIComponent(reference)}`),
   getPaymentProviders: () => fetchJson<{ installed: PaymentProviderConfig[] }>('/api/payments/providers'),
+  checkPaystackStatus: () => fetchJson<{ active: boolean; message: string }>('/api/admin/payments/status'),
   updatePaymentSettings: (settings: Partial<PaymentProviderConfig>) => fetchJson<PaymentProviderConfig>('/api/admin/payments/settings', { method: 'POST', body: JSON.stringify(settings) }),
   trackOrder: (orderId: string, identifier: string) => fetchJson<{ order: Order; fulfillment: { access_url: string; fulfilled_at: string } | null }>(`/api/orders/track?orderId=${encodeURIComponent(orderId)}&identifier=${encodeURIComponent(identifier)}`),
   getOrder: (id: string) => fetchJson<{ order: Order; fulfillment: { access_url: string; fulfilled_at: string } | null }>(`/api/orders/${encodeURIComponent(id)}`),
