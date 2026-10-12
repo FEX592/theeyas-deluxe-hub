@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext.tsx';
 
 // Customer Pages
@@ -38,6 +38,7 @@ import { StoreSettingsPage } from './pages/admin/StoreSettingsPage.tsx';
 // Guard for Admin Pages
 const AuthRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { profile, isLoading } = useAuth();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -47,7 +48,9 @@ const AuthRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     );
   }
 
-  return profile ? <>{children}</> : <Navigate to="/login" replace />;
+  if (profile) return <>{children}</>;
+  const next = `${location.pathname}${location.search}${location.hash}`;
+  return <Navigate to={`/login?next=${encodeURIComponent(next)}`} replace />;
 };
 
 const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {

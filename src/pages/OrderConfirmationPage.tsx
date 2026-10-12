@@ -9,7 +9,9 @@ import { CheckCircle2, Clock, AlertTriangle, ArrowRight, Mail, MessageSquare, Lo
 export const OrderConfirmationPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const [searchParams] = useSearchParams();
-  const reference = searchParams.get('reference');
+  // Paystack normally sends both `reference` and `trxref`; accept either so
+  // server-side verification runs on every valid callback shape.
+  const reference = searchParams.get('reference') || searchParams.get('trxref');
 
   const [order, setOrder] = useState<Order | null>(null);
   const [fulfillment, setFulfillment] = useState<{ access_url: string; fulfilled_at: string } | null>(null);
