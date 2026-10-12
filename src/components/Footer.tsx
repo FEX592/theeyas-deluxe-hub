@@ -1,10 +1,24 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MessageSquare, Shield, HelpCircle, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
+import { api } from '../lib/api.ts';
 
 export const Footer: React.FC = () => {
   const { bootstrapState } = useAuth();
+  const [supportEmail, setSupportEmail] = useState('');
+  const [supportWhatsapp, setSupportWhatsapp] = useState('');
+
+  useEffect(() => {
+    api.getConfig()
+      .then((config) => {
+        setSupportEmail(config.support_email || '');
+        setSupportWhatsapp(config.support_whatsapp || '');
+      })
+      .catch(console.error);
+  }, []);
+
+  const whatsappDigits = supportWhatsapp.replace(/\D/g, '');
 
   return (
     <footer className="bg-[#0A0D14] text-[#F3F4F6] border-t border-[#1F2637]">
@@ -66,12 +80,22 @@ export const Footer: React.FC = () => {
               Support & Inquiries
             </h4>
             <ul className="space-y-2 text-sm text-[#9CA3AF]">
-              <li className="flex items-center gap-2">
-                <Mail className="w-3.5 h-3.5 text-[#FACC15]" />
-                <a href="mailto:support@theeyasdeluxehub.com" className="hover:text-white transition-colors">
-                  support@theeyasdeluxehub.com
-                </a>
-              </li>
+              {supportEmail && (
+                <li className="flex items-center gap-2">
+                  <Mail className="w-3.5 h-3.5 text-[#FACC15] shrink-0" />
+                  <a href={`mailto:${supportEmail}`} className="hover:text-white transition-colors break-all">
+                    {supportEmail}
+                  </a>
+                </li>
+              )}
+              {whatsappDigits && (
+                <li className="flex items-center gap-2">
+                  <MessageSquare className="w-3.5 h-3.5 text-[#FACC15] shrink-0" />
+                  <a href={`https://wa.me/${whatsappDigits}`} target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
+                    WhatsApp: {supportWhatsapp}
+                  </a>
+                </li>
+              )}
               <li className="flex items-center gap-2">
                 <HelpCircle className="w-3.5 h-3.5 text-[#FACC15]" />
                 <span className="text-[#6B7280]">Mon – Fri (9am – 6pm WAT)</span>
