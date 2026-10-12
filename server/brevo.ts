@@ -42,29 +42,62 @@ export function renderTemplate(
 }
 
 function escapePdfText(value: string): string {
-  return value.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+  return value.replace(/[^\x20-\x7E]/g, '-').replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
 }
 
 export function buildReceiptPdf(order: Order): string {
-  const lines = [
-    "THEEYA'S DELUXE HUB — PAYMENT RECEIPT",
-    `Order: ${order.order_number}`,
-    `Customer: ${order.customer_name}`,
-    `Email: ${order.customer_email}`,
-    `WhatsApp: ${order.whatsapp_number}`,
-    `Listing: ${order.listing_snapshot.name}`,
-    `Amount paid: ${order.currency} ${(order.amount_kobo / 100).toLocaleString('en-NG')}`,
-    `Payment status: ${order.payment_status.toUpperCase()}`,
-    `Order status: ${order.order_status.replace('_', ' ').toUpperCase()}`,
-    `Paid at: ${order.paid_at ? new Date(order.paid_at).toLocaleString('en-GB') : 'Pending'}`,
-  ];
-  const text = lines.map((line, index) => `BT /F1 ${index === 0 ? 18 : 12} Tf 72 ${740 - index * 42} Td (${escapePdfText(line)}) Tj ET`).join('\n');
+  const color = (hex: string) => {
+    const values = hex.match(/[A-Fa-f0-9]{2}/g)!.map((value) => parseInt(value, 16) / 255);
+    return `${values.map((value) => value.toFixed(3)).join(' ')} rg`;
+  };
+  const text = (value: string, x: number, y: number, size: number, hex: string, bold = false) =>
+    `q ${color(hex)} BT /F${bold ? 2 : 1} ${size} Tf ${x} ${y} Td (${escapePdfText(value)}) Tj ET Q`;
+  const rect = (x: number, y: number, width: number, height: number, hex: string, stroke = false) =>
+    `q ${color(hex)} ${x} ${y} ${width} ${height} re ${stroke ? 'S' : 'f'} Q`;
+  const amount = `${order.currency} ${(order.amount_kobo / 100).toLocaleString('en-NG')}`;
+  const paidAt = order.paid_at ? new Date(order.paid_at).toLocaleString('en-GB') : 'Pending';
+  const content = [
+    rect(0, 0, 612, 792, 'FCFAF6'),
+    rect(0, 690, 612, 102, '3D183F'),
+    rect(0, 688, 612, 2, 'D6B36A'),
+    text('TDH', 54, 740, 18, 'FFFFFF', true),
+    text("THEEYA'S DELUXE HUB", 108, 744, 18, 'FFFFFF', true),
+    text('PAYMENT RECEIPT', 108, 716, 10, 'D6B36A', true),
+    text(order.order_number, 455, 732, 11, 'FFFFFF', true),
+    text('Issued receipt', 455, 714, 9, 'D9D0DC'),
+    text('Thank you for your payment', 54, 645, 22, '211F23', true),
+    text('Your payment has been verified and recorded successfully.', 54, 620, 11, '706873'),
+    text('BILLED TO', 54, 574, 9, '7B2CBF', true),
+    text(order.customer_name, 54, 550, 13, '211F23', true),
+    text(order.customer_email, 54, 530, 10, '706873'),
+    text(`WhatsApp: ${order.whatsapp_number}`, 54, 512, 10, '706873'),
+    text('ORDER DETAILS', 326, 574, 9, '7B2CBF', true),
+    text(order.listing_snapshot.name, 326, 550, 11, '211F23', true),
+    text(`Order date: ${new Date(order.created_at).toLocaleDateString('en-GB')}`, 326, 530, 10, '706873'),
+    text(`Paid at: ${paidAt}`, 326, 512, 10, '706873'),
+    rect(54, 370, 504, 104, 'F6EEF7'),
+    text('PAYMENT SUMMARY', 76, 448, 9, '7B2CBF', true),
+    text('Payment status', 76, 416, 10, '706873'),
+    text(order.payment_status.toUpperCase(), 76, 396, 12, '26845A', true),
+    text('Order status', 270, 416, 10, '706873'),
+    text(order.order_status.replace('_', ' ').toUpperCase(), 270, 396, 12, '211F23', true),
+    text('TOTAL PAID', 414, 432, 9, '706873', true),
+    text(amount, 414, 400, 17, '3D183F', true),
+    text('PAYMENT REFERENCE', 54, 326, 9, '7B2CBF', true),
+    text(`TDH-TX-${order.id.slice(-6).toUpperCase()}`, 54, 304, 11, '211F23', true),
+    text('This receipt confirms payment for the listed WhatsApp Group or Channel access.', 54, 242, 10, '706873'),
+    text('Keep this document for your records. Your access details are delivered separately by email.', 54, 224, 10, '706873'),
+    rect(54, 92, 504, 1, 'D6B36A'),
+    text('THEEYA\'S DELUXE HUB', 54, 68, 9, '3D183F', true),
+    text('Support: contact us through the website support channel', 54, 50, 9, '706873'),
+  ].join('\n');
   const objects = [
     '<< /Type /Catalog /Pages 2 0 R >>',
     '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>',
     '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
-    `<< /Length ${Buffer.byteLength(text, 'latin1')} >>\nstream\n${text}\nendstream`,
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>',
+    `<< /Length ${Buffer.byteLength(content, 'latin1')} >>\nstream\n${content}\nendstream`,
   ];
   let pdf = '%PDF-1.4\n';
   const offsets = [0];
