@@ -1358,6 +1358,19 @@ class Database {
     return this.data.orders;
   }
 
+  deleteOrder(id: string, actorEmail: string): boolean {
+    const order = this.getOrderById(id);
+    if (!order) return false;
+    this.data.orders = this.data.orders.filter((item) => item.id !== order.id);
+    this.data.fulfillments = this.data.fulfillments.filter((item) => item.order_id !== order.id);
+    this.data.transactions = this.data.transactions.filter((item) => item.order_id !== order.id);
+    this.data.email_outbox = this.data.email_outbox.filter((item) => item.order_id !== order.id);
+    this.data.email_logs = this.data.email_logs.filter((item) => item.order_id !== order.id);
+    this.addAuditLog(actorEmail, 'order.deleted', 'order', order.id, `Owner permanently deleted order ${order.order_number} and related operational records`);
+    this.save();
+    return true;
+  }
+
   getOrderFulfillment(orderId: string): OrderFulfillment | undefined {
     return this.data.fulfillments.find((f) => f.order_id === orderId);
   }
@@ -1628,6 +1641,15 @@ class Database {
 
   getEmailOutbox(): EmailOutboxJob[] {
     return this.data.email_outbox;
+  }
+
+  deleteEmailJob(id: string, actorEmail: string): boolean {
+    const index = this.data.email_outbox.findIndex((job) => job.id === id);
+    if (index < 0) return false;
+    const [job] = this.data.email_outbox.splice(index, 1);
+    this.addAuditLog(actorEmail, 'email_outbox.deleted', 'email_outbox', id, `Owner permanently deleted ${job.event_key} email job`);
+    this.save();
+    return true;
   }
 
   getEmailLogs(): EmailLogEntry[] {

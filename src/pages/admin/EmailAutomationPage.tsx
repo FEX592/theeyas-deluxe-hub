@@ -4,7 +4,7 @@ import { api } from '../../lib/api.ts';
 import { EmailOutboxJob, EmailTemplate } from '../../types.ts';
 import { AdminLayout } from '../../components/AdminLayout.tsx';
 import { BrevoSenderSettings } from '../../components/BrevoSenderSettings.tsx';
-import { Mail, RefreshCw, FileCode, ListOrdered, CheckCircle2, AlertTriangle, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, RefreshCw, FileCode, ListOrdered, CheckCircle2, AlertTriangle, ArrowRight, Loader2, Trash2 } from 'lucide-react';
 
 export const EmailAutomationPage: React.FC = () => {
   const [outbox, setOutbox] = useState<EmailOutboxJob[]>([]);
@@ -39,6 +39,16 @@ export const EmailAutomationPage: React.FC = () => {
       setProcessResult(`Outbox run error: ${err.message}`);
     } finally {
       setProcessing(false);
+    }
+  };
+
+  const handleDeleteJob = async (job: EmailOutboxJob) => {
+    if (!window.confirm(`OWNER ACTION: permanently delete this ${job.event_key} email job for ${job.recipient}?`)) return;
+    try {
+      await api.deleteEmailJob(job.id);
+      setOutbox((current) => current.filter((item) => item.id !== job.id));
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete email job');
     }
   };
 
@@ -178,9 +188,14 @@ export const EmailAutomationPage: React.FC = () => {
                     )}
                   </div>
 
-                  <span className="text-[11px] text-[#6B7280] font-mono shrink-0">
-                    {new Date(job.created_at).toLocaleTimeString()}
-                  </span>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-[11px] text-[#6B7280] font-mono">
+                      {new Date(job.created_at).toLocaleTimeString()}
+                    </span>
+                    <button onClick={() => handleDeleteJob(job)} className="p-1.5 text-red-400 hover:bg-red-950/50 rounded" title="Owner: permanently delete email job">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))
             )}

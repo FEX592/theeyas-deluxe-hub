@@ -50,6 +50,14 @@ function getActorEmail(req: Request): string {
   return (req as AuthenticatedRequest).authUser?.email || '';
 }
 
+function requireOwner(req: Request, res: Response): boolean {
+  if ((req as AuthenticatedRequest).authUser?.role !== 'owner') {
+    res.status(403).json({ error: 'Owner access is required for permanent deletion.' });
+    return false;
+  }
+  return true;
+}
+
 function publicRequest(req: Request): boolean {
   if (req.path === '/api/health' || req.path === '/api/auth/login' || req.path === '/api/auth/signup' || req.path === '/api/auth/session' || req.path === '/api/auth/logout' || req.path === '/api/admin/bootstrap-status' || req.path === '/api/realtime/catalog') return true;
   if (req.method === 'POST' && req.path === '/api/payments/webhooks/paystack') return true;
@@ -666,6 +674,17 @@ app.get('/api/admin/orders/:id', (req: Request, res: Response) => {
 });
 
 // Admin Manual Fulfillment Completion
+app.delete('/api/admin/orders/:id', (req: Request, res: Response) => {
+  if (!requireOwner(req, res)) return;
+  try {
+    const deleted = db.deleteOrder(req.params.id, getActorEmail(req));
+    if (!deleted) return res.status(404).json({ error: 'Order not found' });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 app.post('/api/admin/orders/:id/fulfill', (req: Request, res: Response) => {
   try {
     const actorEmail = getActorEmail(req);
@@ -807,6 +826,17 @@ app.post('/api/admin/emails/test', async (req: Request, res: Response) => {
 // Outbox and Logs
 app.get('/api/admin/emails/outbox', (_req: Request, res: Response) => {
   res.json(db.getEmailOutbox());
+});
+
+app.delete('/api/admin/emails/outbox/:id', (req: Request, res: Response) => {
+  if (!requireOwner(req, res)) return;
+  try {
+    const deleted = db.deleteEmailJob(req.params.id, getActorEmail(req));
+    if (!deleted) return res.status(404).json({ error: 'Outbox job not found' });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 app.post('/api/admin/emails/process-outbox', async (_req: Request, res: Response) => {

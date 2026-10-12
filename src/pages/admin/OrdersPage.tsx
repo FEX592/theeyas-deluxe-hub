@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../../lib/api.ts';
 import { Order } from '../../types.ts';
 import { AdminLayout } from '../../components/AdminLayout.tsx';
-import { Search, ArrowRight } from 'lucide-react';
+import { Search, ArrowRight, Download, Trash2 } from 'lucide-react';
 
 export const OrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -36,6 +36,54 @@ export const OrdersPage: React.FC = () => {
     }
     return true;
   });
+
+  const downloadRecipientPng = (order: Order) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200;
+    canvas.height = 630;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    context.fillStyle = '#0A0D14';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = '#7B2CBF';
+    context.globalAlpha = 0.24;
+    context.beginPath();
+    context.arc(1030, 110, 250, 0, Math.PI * 2);
+    context.fill();
+    context.globalAlpha = 1;
+    context.fillStyle = '#D6B36A';
+    context.font = '700 24px Arial';
+    context.fillText('THEEYA\'S DELUXE HUB · ORDER RECIPIENT', 64, 72);
+    context.fillStyle = '#FFFFFF';
+    context.font = '800 46px Arial';
+    context.fillText(order.customer_name, 64, 160);
+    context.fillStyle = '#E5E7EB';
+    context.font = '26px Arial';
+    context.fillText(order.customer_email, 64, 215);
+    context.fillText(`WhatsApp: ${order.whatsapp_number}`, 64, 260);
+    context.fillStyle = '#9CA3AF';
+    context.font = '22px Arial';
+    context.fillText(`Listing: ${order.listing_snapshot.name}`, 64, 350);
+    context.fillText(`Order: ${order.order_number}`, 64, 390);
+    context.fillText(`Status: ${order.order_status.replace('_', ' ').toUpperCase()}`, 64, 430);
+    context.fillStyle = '#D6B36A';
+    context.font = '700 20px Arial';
+    context.fillText(`Generated ${new Date().toLocaleString('en-NG')}`, 64, 550);
+    const link = document.createElement('a');
+    link.download = `${order.order_number}-recipient.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
+
+  const handleDelete = async (order: Order) => {
+    if (!window.confirm(`OWNER ACTION: permanently delete ${order.order_number}? This removes the order, fulfillment, payment transaction, and related email records.`)) return;
+    try {
+      await api.deleteOrder(order.id);
+      setOrders((current) => current.filter((item) => item.id !== order.id));
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete order');
+    }
+  };
 
   return (
     <AdminLayout
@@ -155,13 +203,21 @@ export const OrdersPage: React.FC = () => {
                         </td>
 
                         <td className="py-3.5 px-4 text-right">
-                          <Link
-                            to={`/admin/orders/${order.id}`}
-                            className="px-3 py-1.5 text-xs font-semibold text-[#FACC15] hover:bg-[#161C2C] border border-[#1E2638] rounded-xl inline-flex items-center gap-1 transition-colors"
-                          >
-                            <span>Inspect</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </Link>
+                          <div className="flex items-center justify-end gap-2">
+                            <Link
+                              to={`/admin/orders/${order.id}`}
+                              className="px-3 py-1.5 text-xs font-semibold text-[#FACC15] hover:bg-[#161C2C] border border-[#1E2638] rounded-xl inline-flex items-center gap-1 transition-colors"
+                            >
+                              <span>Inspect</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </Link>
+                            <button onClick={() => downloadRecipientPng(order)} className="p-1.5 text-[#9CA3AF] hover:text-white hover:bg-[#161C2C] rounded" title="Download recipient PNG">
+                              <Download className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => handleDelete(order)} className="p-1.5 text-red-400 hover:bg-red-950/50 rounded" title="Owner: permanently delete order">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
