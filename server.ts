@@ -6,7 +6,8 @@ import { db } from './server/db.ts';
 import { paystack } from './server/paystack.ts';
 import { brevo, renderTemplate } from './server/brevo.ts';
 import { outboxWorker } from './server/outbox-worker.ts';
-import { authenticate, createAccount, createSession, destroySession, getSession, hasAdminAccount, isAuthConfigured } from './server/auth.ts';
+import { authenticate, createAccount, createSession, deleteOwnAccount, destroySession, getSession, hasAdminAccount, isAuthConfigured } from './server/auth.ts';
+import { uploadListingCover } from './server/storage.ts';
 import type { Profile } from './server/types.ts';
 
 dotenv.config();
@@ -17,6 +18,7 @@ const PORT = Number(process.env.PORT) || 3000;
 // Capture raw body for webhook verification
 app.use(
   express.json({
+    limit: '8mb',
     verify: (req: any, _res, buf) => {
       req.rawBody = buf.toString();
     },
@@ -189,6 +191,21 @@ app.post('/api/auth/logout', (req: Request, res: Response) => {
   res.json({ success: true });
 });
 
+app.delete('/api/auth/account', (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const user = req.authUser;
+    if (!user || typeof req.body?.password !== 'string' || !req.body.password) {
+      return res.status(400).json({ error: 'Enter your current password to delete your account.' });
+    }
+    deleteOwnAccount(user.email, req.body.password);
+    db.deleteProfileByEmail(user.email);
+    clearSessionCookie(res);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || 'Account deletion failed.' });
+  }
+});
+
 // Kept for the existing setup screen; it reports status but cannot claim an owner outside signup.
 app.get('/api/admin/bootstrap-status', (_req: Request, res: Response) => {
   db.refreshFromRemote();
@@ -228,11 +245,13 @@ app.delete('/api/admin/categories/:id', (req: Request, res: Response) => {
 // 4. Listings
 // Public listings (CRITICAL: NEVER exposes private_links)
 app.get('/api/listings', (_req: Request, res: Response) => {
+  db.refreshFromRemote();
   res.set('Cache-Control', 'no-store, max-age=0');
   res.json(db.getPublicListings());
 });
 
 app.get('/api/listings/:idOrSlug', (req: Request, res: Response) => {
+  db.refreshFromRemote();
   res.set('Cache-Control', 'no-store, max-age=0');
   const param = req.params.idOrSlug;
   const listing = db.getListingBySlug(param) || db.getListingById(param);
@@ -244,6 +263,7 @@ app.get('/api/listings/:idOrSlug', (req: Request, res: Response) => {
 
 // Admin Listings (Includes drafts and private link details)
 app.get('/api/admin/listings', (_req: Request, res: Response) => {
+  db.refreshFromRemote();
   const listings = db.getAllListings();
   const withLinks = listings.map((l) => {
     const link = db.getListingPrivateLink(l.id);
@@ -257,6 +277,7 @@ app.get('/api/admin/listings', (_req: Request, res: Response) => {
 });
 
 app.get('/api/admin/listings/:id', (req: Request, res: Response) => {
+  db.refreshFromRemote();
   const listing = db.getListingById(req.params.id);
   if (!listing) return res.status(404).json({ error: 'Listing not found' });
   const link = db.getListingPrivateLink(listing.id);
@@ -289,6 +310,16 @@ app.delete('/api/admin/listings/:id', (req: Request, res: Response) => {
     res.json({ success: true });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/listing-covers', async (req: Request, res: Response) => {
+  try {
+    const { mime_type, data_base64 } = req.body || {};
+    const uploaded = await uploadListingCover(mime_type, data_base64);
+    res.status(201).json(uploaded);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || 'Cover image upload failed.' });
   }
 });
 

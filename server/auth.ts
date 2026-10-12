@@ -24,10 +24,11 @@ function configured(): boolean {
 function request(method: 'GET' | 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown): any {
   if (!configured()) throw new Error('Server authentication is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
   const args = ['-fsS', '--max-time', '8', '-X', method, `${restUrl}${path}`, '-H', `apikey: ${serviceRoleKey}`, '-H', `Authorization: Bearer ${serviceRoleKey}`, '-H', 'Content-Type: application/json'];
-  if (body !== undefined) args.push('-H', 'Prefer: return=representation', '--data-binary', JSON.stringify(body));
+    if (body !== undefined) args.push('-H', 'Prefer: return=representation', '--data-binary', JSON.stringify(body));
+    else if (method === 'DELETE') args.push('-H', 'Prefer: return=representation');
   try {
     const output = execFileSync('curl', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
-    return output ? JSON.parse(output) : null;
+    return output ? JSON.parse(output) : true;
   } catch (error) {
     throw new Error(`Authentication database request failed: ${error instanceof Error ? error.message : String(error)}`);
   }
@@ -66,6 +67,17 @@ export function isAuthConfigured(): boolean {
 export function hasAdminAccount(): boolean {
   const rows = request('GET', `/tdh_auth_users?role=in.(admin,owner)&select=id&limit=1`) as Array<{ id: string }>;
   return rows.length > 0;
+}
+
+export function deleteOwnAccount(emailInput: string, password: string): Profile {
+  const profile = authenticate(emailInput, password);
+  if (profile.role === 'owner') {
+    const owners = request('GET', '/tdh_auth_users?role=eq.owner&select=id&limit=2') as Array<{ id: string }>;
+    if (owners.length <= 1) throw new Error('The last owner account cannot be deleted. Assign another owner first.');
+  }
+  const deleted = request('DELETE', `/tdh_auth_users?id=eq.${encodeURIComponent(profile.id)}`);
+  if (!Array.isArray(deleted) || deleted.length === 0) throw new Error('Account could not be deleted. Please try again.');
+  return profile;
 }
 
 export function createAccount(emailInput: string, displayNameInput: string, password: string, role: UserRole): Profile {

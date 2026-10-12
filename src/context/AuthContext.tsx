@@ -11,6 +11,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<Profile>;
   signup: (email: string, displayName: string, password: string) => Promise<{ profile: Profile; firstAccount: boolean }>;
   logout: () => Promise<void>;
+  deleteAccount: (password: string) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -18,7 +19,9 @@ const AuthContext = createContext<AuthContextType>({
   profile: null, bootstrapState: null, isLoading: true, isAdmin: false, isOwner: false,
   login: async () => { throw new Error('Authentication is not ready.'); },
   signup: async () => { throw new Error('Authentication is not ready.'); },
-  logout: async () => {}, refresh: async () => {},
+  logout: async () => {},
+  deleteAccount: async () => { throw new Error('Authentication is not ready.'); },
+  refresh: async () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -59,10 +62,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setProfile(null);
   };
 
+  const deleteAccount = async (password: string) => {
+    await api.deleteAccount(password);
+    setProfile(null);
+  };
+
   const isAdmin = profile?.role === 'admin' || profile?.role === 'owner';
   const isOwner = profile?.role === 'owner';
 
-  return <AuthContext.Provider value={{ profile, bootstrapState, isLoading, isAdmin, isOwner, login, signup, logout, refresh }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ profile, bootstrapState, isLoading, isAdmin, isOwner, login, signup, logout, deleteAccount, refresh }}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => useContext(AuthContext);

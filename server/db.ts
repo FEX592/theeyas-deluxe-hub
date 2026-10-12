@@ -30,25 +30,102 @@ function remoteStateConfigured(): boolean {
   return Boolean(REMOTE_STATE_URL && SUPABASE_SERVICE_ROLE_KEY);
 }
 
-function remoteRequest(method: 'GET' | 'POST', body?: unknown): any {
+function remoteRequest(): any {
   if (!remoteStateConfigured()) return null;
   const readUrl = `${REMOTE_STATE_URL}?key=eq.store&updated_at=gte.1970-01-01T00%3A00%3A00Z&select=state,updated_at&limit=1&order=updated_at.desc`;
-  const args = ['-fsS', '--max-time', '8', '-X', method, method === 'GET' ? readUrl : REMOTE_STATE_URL,
+  const args = ['-fsS', '--max-time', '8', '-X', 'GET', readUrl,
     '-H', `apikey: ${SUPABASE_SERVICE_ROLE_KEY}`,
     '-H', `Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
     '-H', 'Content-Type: application/json',
     '-H', 'Cache-Control: no-cache',
     '-H', 'Pragma: no-cache'];
-  if (method === 'POST') {
-    args.push('-H', 'Prefer: resolution=merge-duplicates,return=minimal', '--data-binary', JSON.stringify(body));
-  }
   try {
     const output = execFileSync('curl', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
-    return output ? JSON.parse(output) : true;
+    return output ? JSON.parse(output) : null;
   } catch (err) {
     console.error('[Supabase] Durable state request failed:', err instanceof Error ? err.message : err);
     return null;
   }
+}
+
+function writeRemoteState(state: StoreData, expectedUpdatedAt?: string): any {
+  const inserting = !expectedUpdatedAt;
+  const url = inserting
+    ? `${REMOTE_STATE_URL}?on_conflict=key&select=updated_at`
+    : `${REMOTE_STATE_URL}?key=eq.store&updated_at=eq.${encodeURIComponent(expectedUpdatedAt)}&select=updated_at`;
+  const method = inserting ? 'POST' : 'PATCH';
+  const nextTimestamp = Math.max(Date.now(), expectedUpdatedAt ? Date.parse(expectedUpdatedAt) + 1 : 0);
+  const row = { ...(inserting ? { key: 'store' } : {}), state, updated_at: new Date(nextTimestamp).toISOString() };
+  const args = ['-fsS', '--max-time', '8', '-X', method, url,
+    '-H', `apikey: ${SUPABASE_SERVICE_ROLE_KEY}`,
+    '-H', `Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+    '-H', 'Content-Type: application/json',
+    '-H', 'Cache-Control: no-cache',
+    '-H', inserting ? 'Prefer: resolution=ignore-duplicates,return=representation' : 'Prefer: return=representation',
+    '--data-binary', JSON.stringify(inserting ? [row] : row)];
+  try {
+    const output = execFileSync('curl', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+    return output ? JSON.parse(output) : null;
+  } catch (err) {
+    console.error('[Supabase] Durable state write failed:', err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
+function cloneState<T>(value: T): T {
+  if (value === undefined || value === null) return value;
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function sameState(a: any, b: any): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+function entityKey(value: any): string | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const key = value.id ?? value.key ?? value.order_id ?? value.listing_id ?? value.slug ?? value.token_hash;
+  return key === undefined || key === null ? null : String(key);
+}
+
+// Three-way merge lets independent Vercel instances save without replacing
+// newer data with a stale in-memory snapshot. For entity lists, deletion wins
+// over an instance that still has an older copy of the deleted row.
+function mergeState(base: any, local: any, remote: any): any {
+  if (sameState(local, base)) return cloneState(remote);
+  if (sameState(remote, base)) return cloneState(local);
+  if (Array.isArray(base) && Array.isArray(local) && Array.isArray(remote)) {
+    if (![...base, ...local, ...remote].every((item) => entityKey(item) !== null)) return cloneState(local);
+    const baseMap = new Map(base.map((item) => [entityKey(item)!, item]));
+    const localMap = new Map(local.map((item) => [entityKey(item)!, item]));
+    const remoteMap = new Map(remote.map((item) => [entityKey(item)!, item]));
+    const keys = [...new Set([...remoteMap.keys(), ...localMap.keys(), ...baseMap.keys()])];
+    const merged: any[] = [];
+    for (const key of keys) {
+      const hadBase = baseMap.has(key);
+      const hasLocal = localMap.has(key);
+      const hasRemote = remoteMap.has(key);
+      if (hadBase && (!hasLocal || !hasRemote)) continue;
+      if (!hadBase && !hasLocal && !hasRemote) continue;
+      if (hasLocal && hasRemote) {
+        merged.push(mergeState(baseMap.get(key), localMap.get(key), remoteMap.get(key)));
+      } else if (hasLocal) {
+        merged.push(cloneState(localMap.get(key)));
+      } else if (hasRemote) {
+        merged.push(cloneState(remoteMap.get(key)));
+      }
+    }
+    return merged;
+  }
+  if (base && local && remote && !Array.isArray(base) && !Array.isArray(local) && !Array.isArray(remote)
+    && typeof base === 'object' && typeof local === 'object' && typeof remote === 'object') {
+    const result: Record<string, any> = {};
+    for (const key of new Set([...Object.keys(base), ...Object.keys(local), ...Object.keys(remote)])) {
+      const value = mergeState(base[key], local[key], remote[key]);
+      if (value !== undefined) result[key] = value;
+    }
+    return result;
+  }
+  return cloneState(local);
 }
 
 interface StoreData {
@@ -759,14 +836,16 @@ const defaultEmailTemplates: EmailTemplate[] = [
 
 class Database {
   private data: StoreData;
+  private baseData: StoreData | null = null;
 
   constructor() {
     this.data = this.load();
+    this.baseData = cloneState(this.data);
   }
 
   private load(): StoreData {
     if (remoteStateConfigured()) {
-      const remote = remoteRequest('GET');
+      const remote = remoteRequest();
       if (Array.isArray(remote) && remote[0]?.state) {
         console.log('[Supabase] Loaded durable application state.');
         return remote[0].state as StoreData;
@@ -843,7 +922,7 @@ class Database {
       console.warn('[Realtime] Durable state is not configured; catalog cannot reconcile.');
       return false;
     }
-    const remote = remoteRequest('GET');
+    const remote = remoteRequest();
     if (!Array.isArray(remote) || !remote[0]?.state) {
       console.warn('[Realtime] Durable state read returned no store row.');
       return false;
@@ -851,6 +930,7 @@ class Database {
     const next = remote[0].state as StoreData;
     const changed = JSON.stringify(this.data) !== JSON.stringify(next);
     if (changed) this.data = next;
+    this.baseData = cloneState(next);
     console.info('[Realtime] Catalog reconciliation completed:', {
       changed,
       remoteUpdatedAt: remote[0].updated_at || null,
@@ -868,9 +948,40 @@ class Database {
 
   private save(data = this.data): void {
     if (remoteStateConfigured()) {
-      const result = remoteRequest('POST', [{ key: 'store', state: data, updated_at: new Date().toISOString() }]);
-      if (result !== null) return;
-      throw new Error('Durable Supabase persistence failed; refusing to continue with ephemeral-only writes.');
+      const intended = cloneState(data);
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        const remote = remoteRequest();
+        if (!Array.isArray(remote)) {
+          throw new Error('Durable Supabase state could not be read before saving; refusing to overwrite production data.');
+        }
+        const current = remote[0];
+        if (!current?.state) {
+          if (this.baseData) {
+            throw new Error('Durable Supabase state disappeared; refusing to recreate it from a stale instance.');
+          }
+          const inserted = writeRemoteState(intended);
+          if (Array.isArray(inserted) && inserted[0]?.updated_at) {
+            this.data = intended;
+            this.baseData = cloneState(this.data);
+            return;
+          }
+          if (Array.isArray(inserted) && inserted.length === 0) continue;
+          throw new Error('Durable Supabase persistence failed; refusing to continue with ephemeral-only writes.');
+        }
+
+        const merged = this.baseData
+          ? mergeState(this.baseData, intended, current.state) as StoreData
+          : cloneState(current.state as StoreData);
+        const written = writeRemoteState(merged, current.updated_at);
+        if (Array.isArray(written) && written[0]?.updated_at) {
+          this.data = merged;
+          this.baseData = cloneState(this.data);
+          return;
+        }
+        if (Array.isArray(written) && written.length === 0) continue;
+        throw new Error('Durable Supabase persistence failed; refusing to continue with ephemeral-only writes.');
+      }
+      throw new Error('Durable Supabase state changed repeatedly while saving. Please retry the update.');
     }
 
     if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
@@ -927,6 +1038,15 @@ class Database {
 
   getAllProfiles(): Profile[] {
     return this.data.profiles;
+  }
+
+  deleteProfileByEmail(email: string): void {
+    const normalized = email.trim().toLowerCase();
+    const remaining = this.data.profiles.filter((profile) => profile.email.toLowerCase() !== normalized);
+    if (remaining.length !== this.data.profiles.length) {
+      this.data.profiles = remaining;
+      this.save();
+    }
   }
 
   createOrUpdateCustomer(email: string, displayName: string): Profile {
