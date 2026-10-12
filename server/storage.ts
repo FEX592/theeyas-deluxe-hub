@@ -18,26 +18,70 @@ function detectImageType(buffer: Buffer): { mime: string; extension: string } | 
   return null;
 }
 
+
 async function ensureBucket(): Promise<void> {
-  const response = await fetch(`${SUPABASE_URL}/storage/v1/bucket`, {
-    method: 'POST',
-    headers: {
-      apikey: SUPABASE_SERVICE_ROLE_KEY,
-      Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      id: BUCKET,
-      name: BUCKET,
-      public: true,
-      file_size_limit: MAX_IMAGE_BYTES,
-      allowed_mime_types: ['image/jpeg', 'image/png', 'image/webp'],
-    }),
-  });
-  if (response.ok || response.status === 409) return;
-  const detail = (await response.text()).slice(0, 300);
-  throw new Error(`Could not prepare image storage (${response.status}): ${detail}`);
+  const headers = {
+    apikey: SUPABASE_SERVICE_ROLE_KEY,
+    Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+  };
+
+  // Check whether the bucket already exists.
+  const existing = await fetch(
+    `${SUPABASE_URL}/storage/v1/bucket/${BUCKET}`,
+    { headers }
+  );
+
+  if (existing.ok) return;
+
+  if (existing.status !== 404) {
+    const detail = (await existing.text()).slice(0, 300);
+    throw new Error(
+      `Could not check image storage (${existing.status}): ${detail}`
+    );
+  }
+
+  // Create the bucket only if it doesn't exist.
+  const response = await fetch(
+    `${SUPABASE_URL}/storage/v1/bucket`,
+    {
+      method: 'POST',
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: BUCKET,
+        name: BUCKET,
+        public: true,
+        file_size_limit: MAX_IMAGE_BYTES,
+        allowed_mime_types: [
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+        ],
+      }),
+    }
+  );
+
+  if (response.ok) return;
+
+  const detail = await response.text();
+  let errorCode = '';
+
+  try {
+    errorCode = JSON.parse(detail).code || '';
+  } catch {
+    // Keep the original error details if the response isn't JSON.
+  }
+
+  // Another simultaneous upload may have created the bucket.
+  if (errorCode === 'BucketAlreadyExists') return;
+
+  throw new Error(
+    `Could not prepare image storage (${response.status}): ${detail.slice(0, 300)}`
+  );
 }
+  
 
 export async function uploadListingCover(mimeType: string, base64Data: string): Promise<{ url: string }> {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
