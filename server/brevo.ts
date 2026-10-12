@@ -53,7 +53,7 @@ function escapeXml(value: string): string {
 export function buildReceiptSvg(order: Order): string {
   const amount = `${order.currency} ${(order.amount_kobo / 100).toLocaleString('en-NG')}`;
   const paidAt = order.paid_at ? new Date(order.paid_at).toLocaleString('en-GB') : 'Pending';
-  const text = (value: string, x: number, y: number, size: number, fill: string, bold = false) => `<text x="${x}" y="${792 - y}" font-family="Arial, Helvetica, sans-serif" font-size="${size}" font-weight="${bold ? 700 : 400}" fill="#${fill}">${escapeXml(value)}</text>`;
+  const text = (value: string, x: number, y: number, size: number, fill: string, bold = false) => `<text x="${x}" y="${792 - y}" font-family="DejaVu Sans" font-size="${size}" font-weight="${bold ? 700 : 400}" fill="#${fill}">${escapeXml(value)}</text>`;
   const rect = (x: number, y: number, width: number, height: number, fill: string) => `<rect x="${x}" y="${792 - y - height}" width="${width}" height="${height}" fill="#${fill}"/>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="612" height="792" viewBox="0 0 612 792">
   ${rect(0, 0, 612, 792, 'FCFAF6')}

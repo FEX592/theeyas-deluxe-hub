@@ -3,13 +3,15 @@ import { Link } from 'react-router-dom';
 import { api } from '../../lib/api.ts';
 import { Order } from '../../types.ts';
 import { AdminLayout } from '../../components/AdminLayout.tsx';
-import { Search, ArrowRight, Download, Trash2 } from 'lucide-react';
+import { Search, ArrowRight, Download, Trash2, FileText, Image as ImageIcon, X } from 'lucide-react';
 
 export const OrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
+  const [receiptDownloading, setReceiptDownloading] = useState(false);
 
   useEffect(() => {
     api
@@ -37,22 +39,20 @@ export const OrdersPage: React.FC = () => {
     return true;
   });
 
-  const downloadAdminReceipt = async (order: Order) => {
-    const choice = window.prompt('Download admin receipt as PDF or PNG?', 'PDF')?.trim().toLowerCase();
-    if (!choice) return;
-    if (choice !== 'pdf' && choice !== 'png') {
-      alert('Please enter PDF or PNG.');
-      return;
-    }
+  const downloadAdminReceipt = async (order: Order, format: 'pdf' | 'png') => {
+    setReceiptDownloading(true);
     try {
-      const blob = await api.downloadReceipt(order.id, choice);
+      const blob = await api.downloadReceipt(order.id, format);
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = `${order.order_number}-receipt.${choice}`;
+      link.download = `${order.order_number}-receipt.${format}`;
       link.click();
       URL.revokeObjectURL(link.href);
+      setReceiptOrder(null);
     } catch (err: any) {
       alert(err.message || 'Receipt download failed');
+    } finally {
+      setReceiptDownloading(false);
     }
   };
 
@@ -66,7 +66,7 @@ export const OrdersPage: React.FC = () => {
     }
   };
 
-  return (
+  return (<>
     <AdminLayout
       title="Orders Queue"
       subtitle="Track customer purchases, verify payments, and send WhatsApp Group or Channel invitation links"
@@ -192,7 +192,7 @@ export const OrdersPage: React.FC = () => {
                               <span>Inspect</span>
                               <ArrowRight className="w-3.5 h-3.5" />
                             </Link>
-                            <button onClick={() => downloadAdminReceipt(order)} className="p-1.5 text-[#9CA3AF] hover:text-white hover:bg-[#161C2C] rounded" title="Admin: download receipt as PDF or PNG">
+                            <button onClick={() => setReceiptOrder(order)} className="p-1.5 text-[#9CA3AF] hover:text-white hover:bg-[#161C2C] rounded" title="Admin: download receipt as PDF or PNG">
                               <Download className="w-3.5 h-3.5" />
                             </button>
                             <button onClick={() => handleDelete(order)} className="p-1.5 text-red-400 hover:bg-red-950/50 rounded" title="Owner: permanently delete order">
@@ -210,5 +210,27 @@ export const OrdersPage: React.FC = () => {
         </div>
       </div>
     </AdminLayout>
+      {receiptOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-label="Choose receipt format">
+          <div className="w-full max-w-sm rounded-2xl border border-[#2B3448] bg-[#111622] p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="font-display text-base font-bold text-white">Download admin receipt</h2>
+                <p className="mt-1 text-xs text-[#9CA3AF]">Choose a format for {receiptOrder.order_number}.</p>
+              </div>
+              <button onClick={() => setReceiptOrder(null)} className="rounded-lg p-1.5 text-[#9CA3AF] hover:bg-[#1B2333] hover:text-white" aria-label="Close"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <button disabled={receiptDownloading} onClick={() => downloadAdminReceipt(receiptOrder, 'pdf')} className="rounded-xl border border-[#3A2A47] bg-[#171D2B] px-4 py-4 text-left hover:border-[#FACC15] disabled:opacity-50">
+                <FileText className="h-5 w-5 text-[#FACC15]" /><span className="mt-2 block text-sm font-bold text-white">PDF</span><span className="mt-1 block text-[11px] text-[#9CA3AF]">Print-ready document</span>
+              </button>
+              <button disabled={receiptDownloading} onClick={() => downloadAdminReceipt(receiptOrder, 'png')} className="rounded-xl border border-[#3A2A47] bg-[#171D2B] px-4 py-4 text-left hover:border-[#FACC15] disabled:opacity-50">
+                <ImageIcon className="h-5 w-5 text-[#FACC15]" /><span className="mt-2 block text-sm font-bold text-white">PNG</span><span className="mt-1 block text-[11px] text-[#9CA3AF]">Image receipt</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
