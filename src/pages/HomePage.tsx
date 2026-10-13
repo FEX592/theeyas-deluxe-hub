@@ -85,7 +85,7 @@ export const HomePage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-[#FACC15]" />
-                  <span>WhatsApp invitation links delivered after purchase</span>
+                  <span>Purchase curated WhatsApp groups and channels</span>
                 </div>
               </div>
             </div>
@@ -242,7 +242,7 @@ export const HomePage: React.FC = () => {
                 <span className="font-display font-extrabold text-2xl text-[#FACC15] block mb-2 font-mono">04</span>
                 <h3 className="font-display font-bold text-base text-white mb-1">Join Your WhatsApp Group or Channel</h3>
                 <p className="text-xs text-[#9CA3AF] leading-relaxed">
-                  After your payment is confirmed, we send the WhatsApp Group or Channel invitation link to your email and order page.
+                  Once your purchase is confirmed, we email you an invitation to join the WhatsApp Group or Channel and show it on your order page.
                 </p>
               </div>
             </div>

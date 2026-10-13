@@ -77,11 +77,11 @@ export const ListingPreviewPage: React.FC = () => {
                   <img
                     src={listing.image_url}
                     alt={listing.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-lg text-white mb-2">Description</h3>
+                  <h3 className="font-display font-bold text-lg text-white mb-2">ABOUT</h3>
                   <p className="text-sm text-[#9CA3AF] leading-relaxed whitespace-pre-line">
                     {listing.description}
                   </p>

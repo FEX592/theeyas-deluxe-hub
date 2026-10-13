@@ -17,7 +17,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, categoryName 
           src={listing.image_url}
           alt={listing.name}
           referrerPolicy="no-referrer"
-          className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-300"
+          className="w-full h-full object-contain"
           onError={(e) => {
             e.currentTarget.style.display = 'none';
             const parent = e.currentTarget.parentElement;

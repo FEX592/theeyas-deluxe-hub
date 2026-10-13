@@ -1259,6 +1259,7 @@ class Database {
         price_ngn: Number(listingData.price_ngn) || 10000,
         status: listingData.status || 'draft',
         availability: listingData.availability || 'available',
+        gallery_media: listingData.gallery_media || [],
         featured: listingData.featured || false,
         fulfillment_mode: listingData.fulfillment_mode || 'automatic',
         created_at: now,

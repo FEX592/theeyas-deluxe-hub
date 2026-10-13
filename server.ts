@@ -7,7 +7,7 @@ import { matchesExpectedAmount, paystack } from './server/paystack.ts';
 import { brevo, buildReceiptPdf, buildReceiptPng, renderTemplate } from './server/brevo.ts';
 import { outboxWorker } from './server/outbox-worker.ts';
 import { authenticate, createAccount, createSession, deleteOwnAccount, destroySession, getSession, hasAdminAccount, isAuthConfigured } from './server/auth.ts';
-import { uploadListingCover } from './server/storage.ts';
+import { createSignedListingMediaUpload, uploadListingCover } from './server/storage.ts';
 import type { Profile } from './server/types.ts';
 
 dotenv.config();
@@ -334,6 +334,16 @@ app.delete('/api/admin/listings/:id', (req: Request, res: Response) => {
     res.json({ success: true });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/listing-media/sign', async (req: Request, res: Response) => {
+  try {
+    const { mime_type } = req.body || {};
+    const upload = await createSignedListingMediaUpload(mime_type);
+    res.status(201).json(upload);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || 'Could not prepare the media upload.' });
   }
 });
 

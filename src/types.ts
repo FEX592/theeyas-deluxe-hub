@@ -29,12 +29,19 @@ export type ListingStatus = 'published' | 'draft' | 'archived';
 export type ListingAvailability = 'available' | 'sold_out' | 'paused';
 export type FulfillmentMode = 'automatic' | 'manual';
 
+export interface ListingMediaItem {
+  url: string;
+  kind: 'image';
+  name?: string;
+}
+
 export interface Listing {
   id: string;
   slug: string;
   name: string;
   description: string;
   image_url: string;
+  gallery_media?: ListingMediaItem[];
   type: ListingType;
   category_id: string;
   price_ngn: number;

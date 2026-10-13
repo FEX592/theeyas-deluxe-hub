@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { api } from '../../lib/api.ts';
 import { Category, ListingType, FulfillmentMode } from '../../types.ts';
 import { AdminLayout } from '../../components/AdminLayout.tsx';
+import { ListingMediaGalleryEditor } from '../../components/ListingMediaGalleryEditor.tsx';
+import { ListingMediaItem } from '../../lib/listing-media.ts';
 import { ArrowLeft, AlertCircle, Eye } from 'lucide-react';
 
 export const ListingEditPage: React.FC = () => {
@@ -18,6 +20,8 @@ export const ListingEditPage: React.FC = () => {
   const [priceNgn, setPriceNgn] = useState('15000');
   const [imageUrl, setImageUrl] = useState('');
   const [imageUploading, setImageUploading] = useState(false);
+  const [galleryMedia, setGalleryMedia] = useState<ListingMediaItem[]>([]);
+  const [galleryUploading, setGalleryUploading] = useState(false);
   const [status, setStatus] = useState<'published' | 'draft' | 'archived'>('published');
   const [availability, setAvailability] = useState<'available' | 'sold_out' | 'paused'>('available');
   const [featured, setFeatured] = useState(false);
@@ -42,6 +46,7 @@ export const ListingEditPage: React.FC = () => {
         setCategoryId(listing.category_id);
         setPriceNgn(String(listing.price_ngn));
         setImageUrl(listing.image_url);
+        setGalleryMedia(listing.gallery_media || []);
         setStatus(listing.status);
         setAvailability(listing.availability);
         setFeatured(listing.featured);
@@ -55,7 +60,7 @@ export const ListingEditPage: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!id || !name.trim() || imageUploading) return;
+    if (!id || !name.trim() || imageUploading || galleryUploading) return;
 
     setSaving(true);
     setError(null);
@@ -76,6 +81,7 @@ export const ListingEditPage: React.FC = () => {
         fulfillment_mode: fulfillmentMode,
         internal_source_url: internalSourceUrl.trim(),
         customer_access_url: customerAccessUrl.trim(),
+        gallery_media: galleryMedia,
       });
       navigate('/admin/listings');
     } catch (err: any) {
@@ -233,12 +239,14 @@ export const ListingEditPage: React.FC = () => {
                   className="w-full px-3.5 py-2.5 text-sm bg-[#0B0F17] border border-[#1E2638] rounded-xl focus:outline-none focus:border-[#FACC15] text-white"
                 />
                 <p className="mt-1 text-[11px] text-[#9CA3AF]">{imageUploading ? 'Uploading image…' : imageUrl ? 'Current cover image is saved.' : 'Upload an image from your device.'}</p>
-                {imageUrl && <img src={imageUrl} alt="Cover preview" className="mt-3 h-32 w-full max-w-xs rounded-lg border border-[#1E2638] object-cover" />}
+                {imageUrl && <img src={imageUrl} alt="Cover preview" className="mt-3 h-32 w-full max-w-xs rounded-lg border border-[#1E2638] object-contain" />}
               </div>
+
+              <ListingMediaGalleryEditor media={galleryMedia} onChange={setGalleryMedia} onUploadingChange={setGalleryUploading} disabled={saving} />
 
               <div className="md:col-span-2">
                 <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
-                  WhatsApp Group or Channel Description & Guidelines <span className="text-[#FACC15]">*</span>
+                  ABOUT the WhatsApp Group or Channel <span className="text-[#FACC15]">*</span>
                 </label>
                 <textarea
                   rows={4}
@@ -333,10 +341,10 @@ export const ListingEditPage: React.FC = () => {
 
               <button
                 type="submit"
-                disabled={saving || imageUploading}
+                disabled={saving || imageUploading || galleryUploading}
                 className="px-6 py-3 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl transition-all shadow-md cursor-pointer disabled:opacity-60"
               >
-                {imageUploading ? 'Uploading Cover Image...' : saving ? 'Updating Listing...' : 'Save Listing Changes'}
+                {imageUploading ? 'Uploading Cover Image...' : galleryUploading ? 'Uploading Gallery Photos...' : saving ? 'Updating Listing...' : 'Save Listing Changes'}
               </button>
             </div>
           </form>

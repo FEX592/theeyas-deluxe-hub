@@ -2,6 +2,7 @@ import {
   Listing, Category, Order, OrderFulfillment, PaymentProviderConfig, EmailTemplate,
   EmailOutboxJob, EmailLogEntry, AdminInvite, AuditLogEntry, StoreSettings, Profile, BootstrapState,
 } from '../types.ts';
+import { ListingMediaItem, ListingWithMedia } from './listing-media.ts';
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   const headers = new Headers(options?.headers);
@@ -38,12 +39,25 @@ export const api = {
   saveCategory: (category: Partial<Category>) => fetchJson<Category>('/api/admin/categories', { method: 'POST', body: JSON.stringify(category) }),
   deleteCategory: (id: string) => fetchJson<{ success: boolean }>(`/api/admin/categories/${id}`, { method: 'DELETE' }),
   getPublicListings: () => fetchJson<Listing[]>('/api/listings'),
-  getListing: (idOrSlug: string) => fetchJson<Listing>(`/api/listings/${encodeURIComponent(idOrSlug)}`),
+  getListing: (idOrSlug: string) => fetchJson<Listing & ListingWithMedia>(`/api/listings/${encodeURIComponent(idOrSlug)}`),
   getAdminListings: () => fetchJson<Listing[]>('/api/admin/listings'),
-  getAdminListing: (id: string) => fetchJson<Listing>(`/api/admin/listings/${encodeURIComponent(id)}`),
-  saveListing: (listing: Partial<Listing>) => fetchJson<Listing>('/api/admin/listings', { method: 'POST', body: JSON.stringify(listing) }),
+  getAdminListing: (id: string) => fetchJson<Listing & ListingWithMedia>(`/api/admin/listings/${encodeURIComponent(id)}`),
+  saveListing: (listing: Partial<Listing> & ListingWithMedia) => fetchJson<Listing & ListingWithMedia>('/api/admin/listings', { method: 'POST', body: JSON.stringify(listing) }),
   deleteListing: (id: string) => fetchJson<{ success: boolean }>(`/api/admin/listings/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   uploadListingCover: async (file: File) => fetchJson<{ url: string }>('/api/admin/listing-covers', { method: 'POST', body: JSON.stringify({ mime_type: file.type, data_base64: await fileToBase64(file) }) }),
+  uploadListingMedia: async (file: File) => {
+    const signed = await fetchJson<{ upload_url: string; public_url: string }>('/api/admin/listing-media/sign', {
+      method: 'POST',
+      body: JSON.stringify({ mime_type: file.type }),
+    });
+    const response = await fetch(signed.upload_url, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type, 'x-upsert': 'false', 'cache-control': 'max-age=31536000' },
+      body: file,
+    });
+    if (!response.ok) throw new Error(`Media upload failed (${response.status}). Check the file type and storage limits.`);
+    return { public_url: signed.public_url };
+  },
   smartImport: (url: string) => fetchJson<any>('/api/admin/listings/smart-import', { method: 'POST', body: JSON.stringify({ url }) }),
   initializePayment: (data: { listing_id: string; customer_name: string; customer_email: string; whatsapp_number: string; user_id?: string }) => fetchJson<any>('/api/payments/initialize', { method: 'POST', body: JSON.stringify(data) }),
   verifyPayment: (reference: string) => fetchJson<any>(`/api/payments/verify?reference=${encodeURIComponent(reference)}`),

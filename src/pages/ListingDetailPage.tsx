@@ -4,6 +4,7 @@ import { api } from '../lib/api.ts';
 import { Listing, Category } from '../types.ts';
 import { Header } from '../components/Header.tsx';
 import { Footer } from '../components/Footer.tsx';
+import { ListingMediaGallery } from '../components/ListingMediaGallery.tsx';
 import {
   ArrowLeft,
   ShieldCheck,
@@ -104,30 +105,12 @@ export const ListingDetailPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           {/* Left Column: Visual Media & Full Details */}
           <div className="lg:col-span-7 space-y-8">
-            <div className="aspect-[16/10] w-full rounded-2xl overflow-hidden bg-[#0B0F17] border border-[#1E2638] shadow-xl">
-              <img
-                src={listing.image_url}
-                alt={listing.name}
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  const parent = e.currentTarget.parentElement;
-                  if (parent) {
-                    parent.classList.add('flex', 'items-center', 'justify-center', 'bg-[#111622]');
-                    const fallback = document.createElement('div');
-                    fallback.className = 'text-center p-8 text-white';
-                    fallback.innerHTML = `<span class="font-bold text-sm tracking-widest block uppercase text-[#FACC15]">THEEYA'S DELUXE HUB</span><span class="text-xs text-[#9CA3AF]">Verified WhatsApp Listing</span>`;
-                    parent.appendChild(fallback);
-                  }
-                }}
-              />
-            </div>
+            <ListingMediaGallery coverUrl={listing.image_url} title={listing.name} media={listing.gallery_media || []} />
 
             {/* Description Section */}
             <div className="bg-[#111622] rounded-2xl border border-[#1F2637] p-6 md:p-8 space-y-6 shadow-xl">
               <div>
-                <h2 className="font-display font-bold text-lg text-white mb-3">WhatsApp Group or Channel Description</h2>
+                <h2 className="font-display font-bold text-lg text-white mb-3">ABOUT</h2>
                 <div className="text-sm text-[#9CA3AF] leading-relaxed whitespace-pre-line space-y-4">
                   {listing.description}
                 </div>
@@ -206,8 +189,8 @@ export const ListingDetailPage: React.FC = () => {
                 </div>
                 <p className="leading-relaxed">
                   {listing.fulfillment_mode === 'automatic'
-                    ? 'After Paystack confirms your payment, the WhatsApp Group or Channel invitation link is sent to your email.'
-                    : 'After Paystack confirms your payment, our team reviews your order and emails you the WhatsApp Group or Channel invitation link.'}
+                    ? 'After Paystack confirms your purchase of this WhatsApp Group or Channel, we email you an invitation to join.'
+                    : 'After Paystack confirms your purchase of this WhatsApp Group or Channel, our team reviews your order and emails you an invitation to join.'}
                 </p>
               </div>
 
