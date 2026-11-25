@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../lib/api.ts';
 import { Listing } from '../types.ts';
@@ -72,12 +73,20 @@ export const CheckoutPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0A0D14] text-[#F3F4F6]">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="min-h-screen flex flex-col bg-[#0A0D14] text-[#F3F4F6]"
+    >
       <Header />
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
         {/* Navigation Back */}
-        <div className="mb-8">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="mb-8"
+        >
           <Link
             to={listing ? `/marketplace/${listing.slug}` : '/marketplace'}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#FACC15] hover:text-[#EAB308] mb-3"
@@ -85,21 +94,37 @@ export const CheckoutPage: React.FC = () => {
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to Listing</span>
           </Link>
-          <h1 className="font-display font-extrabold text-3xl text-white tracking-tight">
+          <motion.h1
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="font-display font-extrabold text-3xl text-white tracking-tight"
+          >
             Order Checkout
-          </h1>
-          <p className="text-xs text-[#9CA3AF] mt-1">
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-xs text-[#9CA3AF] mt-1"
+          >
             Review your WhatsApp Group or Channel purchase and enter the contact details for your order and invitation link.
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
         {loadingListing ? (
-          <div className="bg-[#111622] rounded-2xl border border-[#1F2637] p-12 text-center">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-[#111622] rounded-2xl border border-[#1F2637] p-12 text-center"
+          >
             <Loader2 className="w-8 h-8 animate-spin text-[#FACC15] mx-auto mb-3" />
             <p className="text-xs text-[#9CA3AF]">Loading listing details...</p>
-          </div>
+          </motion.div>
         ) : !listing ? (
-          <div className="bg-[#111622] rounded-2xl border border-red-800 p-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-[#111622] rounded-2xl border border-red-800 p-8 text-center"
+          >
             <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-2" />
             <h2 className="font-bold text-base text-white">Listing Unavailable</h2>
             <p className="text-xs text-[#9CA3AF] mt-1 mb-4">{errorMessage || 'Unable to load listing.'}</p>
@@ -109,11 +134,15 @@ export const CheckoutPage: React.FC = () => {
             >
               Browse Marketplace
             </Link>
-          </div>
+          </motion.div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
             {/* Form Left Column */}
-            <div className="md:col-span-7 bg-[#111622] rounded-2xl border border-[#1F2637] p-6 md:p-8 shadow-xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="md:col-span-7 bg-[#111622] rounded-2xl border border-[#1F2637] p-6 md:p-8 shadow-xl"
+            >
               <h2 className="font-display font-bold text-lg text-white mb-1">
                 Customer Information
               </h2>
@@ -122,10 +151,14 @@ export const CheckoutPage: React.FC = () => {
               </p>
 
               {errorMessage && (
-                <div className="mb-6 p-4 rounded-xl bg-red-950/60 border border-red-800 text-xs text-red-300 flex items-start gap-2.5">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-6 p-4 rounded-xl bg-red-950/60 border border-red-800 text-xs text-red-300 flex items-start gap-2.5"
+                >
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
                   <span>{errorMessage}</span>
-                </div>
+                </motion.div>
               )}
 
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -178,7 +211,9 @@ export const CheckoutPage: React.FC = () => {
                 </div>
 
                 <div className="pt-4">
-                  <button
+                  <motion.button
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.97 }}
                     type="submit"
                     disabled={submitting}
                     className="w-full py-3.5 px-6 text-sm font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] disabled:opacity-60 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
@@ -194,7 +229,7 @@ export const CheckoutPage: React.FC = () => {
                         <span>Proceed to Pay ₦{listing.price_ngn.toLocaleString('en-NG')}</span>
                       </>
                     )}
-                  </button>
+                  </motion.button>
                 </div>
 
                 <div className="text-center pt-2">
@@ -204,10 +239,15 @@ export const CheckoutPage: React.FC = () => {
                   </span>
                 </div>
               </form>
-            </div>
+            </motion.div>
 
             {/* Order Summary Right Column */}
-            <div className="md:col-span-5 bg-[#111622] rounded-2xl border border-[#1F2637] p-6 shadow-xl space-y-5">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="md:col-span-5 bg-[#111622] rounded-2xl border border-[#1F2637] p-6 shadow-xl space-y-5"
+            >
               <h3 className="font-display font-bold text-sm tracking-wide text-white uppercase">
                 Order Summary
               </h3>
@@ -251,12 +291,12 @@ export const CheckoutPage: React.FC = () => {
                   ₦{listing.price_ngn.toLocaleString('en-NG')}
                 </span>
               </div>
-            </div>
+            </motion.div>
           </div>
         )}
       </main>
 
       <Footer />
-    </div>
+    </motion.div>
   );
 };

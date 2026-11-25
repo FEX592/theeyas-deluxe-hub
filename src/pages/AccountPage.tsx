@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.tsx';
 import { api } from '../lib/api.ts';
@@ -51,28 +52,46 @@ export const AccountPage: React.FC = () => {
 
   if (!profile) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#0A0D14] text-[#F3F4F6]">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="min-h-screen flex flex-col bg-[#0A0D14] text-[#F3F4F6]"
+      >
         <Header />
         <main className="flex-1 max-w-md mx-auto px-4 py-20 text-center">
-          <div className="bg-[#111622] rounded-2xl border border-[#1F2637] p-8 shadow-xl">
+          <motion.div
+            whileTap={{ scale: 0.97 }}
+            asChild
+            className="bg-[#111622] rounded-2xl border border-[#1F2637] p-8 shadow-xl"
+          >
             <h2 className="font-display font-bold text-xl text-white mb-2">Sign In Required</h2>
             <p className="text-xs text-[#9CA3AF] mb-4">Please log in to review your profile and WhatsApp Group or Channel orders.</p>
-            <Link to="/login" className="px-5 py-2.5 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl transition-all shadow-md inline-block">
-              Go to Sign In
-            </Link>
-          </div>
+            <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} asChild>
+              <Link to="/login" className="px-5 py-2.5 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl transition-all shadow-md inline-block">
+                Go to Sign In
+              </Link>
+            </motion.div>
+          </motion.div>
         </main>
         <Footer />
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0A0D14] text-[#F3F4F6]">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="min-h-screen flex flex-col bg-[#0A0D14] text-[#F3F4F6]"
+    >
       <Header />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-[#1F2637]">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-[#1F2637]"
+        >
           <div>
             <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-white">
               Customer Account
@@ -91,7 +110,9 @@ export const AccountPage: React.FC = () => {
               <span>Security Settings</span>
             </Link>
 
-            <button
+            <motion.button
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => {
                 logout();
                 navigate('/');
@@ -100,13 +121,16 @@ export const AccountPage: React.FC = () => {
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Sign Out</span>
-            </button>
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* User Profile Card */}
-          <div className="bg-[#111622] rounded-2xl border border-[#1F2637] p-6 space-y-4 shadow-xl">
+          <motion.div
+            whileHover={{ y: -4, scale: 1.01 }}
+            className="bg-[#111622] rounded-2xl border border-[#1F2637] p-6 space-y-4 shadow-xl"
+          >
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full bg-[#0B0F17] border border-[#1E2638] flex items-center justify-center text-[#FACC15]">
                 <User className="w-6 h-6" />
@@ -127,103 +151,130 @@ export const AccountPage: React.FC = () => {
                 <span className="font-mono text-white">{new Date(profile.created_at).toLocaleDateString()}</span>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Orders History List */}
-          <div className="md:col-span-2 bg-[#111622] rounded-2xl border border-[#1F2637] p-6 shadow-xl space-y-4">
+          <motion.div
+            whileHover={{ y: -4, scale: 1.01 }}
+            className="md:col-span-2 bg-[#111622] rounded-2xl border border-[#1F2637] p-6 shadow-xl space-y-4"
+          >
             <div className="flex items-center justify-between pb-3 border-b border-[#1F2637]">
               <h3 className="font-display font-bold text-base text-white flex items-center gap-2">
                 <Package className="w-4 h-4 text-[#FACC15]" />
                 <span>My WhatsApp Group & Channel Orders</span>
               </h3>
-              <span className="text-xs text-[#9CA3AF] font-mono">
-                {orders.length} {orders.length === 1 ? 'order' : 'orders'}
-              </span>
             </div>
 
             {loading ? (
-              <div className="py-8 text-center text-xs text-[#6B7280] animate-pulse">Loading orders...</div>
+              <div className="py-8 text-center text-xs text-[#9CA3AF] animate-pulse">
+                <p>Loading your orders...</p>
+              </div>
             ) : orders.length === 0 ? (
-              <div className="py-8 text-center space-y-3">
-                <p className="text-xs text-[#9CA3AF]">You have not placed any orders under this email address yet.</p>
-                <Link
-                  to="/marketplace"
-                  className="px-4 py-2 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl transition-all shadow-md inline-block"
-                >
-                  Explore Marketplace
+              <div className="py-8 text-center text-xs text-[#9CA3AF]">
+                <p>No orders yet. Browse the marketplace to get started.</p>
+                <Link to="/marketplace" className="text-[#FACC15] font-semibold hover:text-white ml-2 inline-block">
+                  Browse Marketplace
                 </Link>
               </div>
             ) : (
               <div className="divide-y divide-[#1F2637]">
-                {orders.map((ord) => (
-                  <div key={ord.id} className="py-3.5 flex items-center justify-between gap-4">
+                {orders.map((order) => (
+                  <motion.div
+                    key={order.id}
+                    whileHover={{ x: 4 }}
+                    className="py-3 flex items-center justify-between gap-4"
+                  >
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-display font-bold text-xs text-white">
-                          {ord.listing_snapshot.name}
-                        </span>
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${
-                          ord.order_status === 'completed'
+                        <span className="font-bold text-xs text-white">{order.order_number}</span>
+                        <span className={`text-[10px] ${
+                          order.order_status === 'completed'
                             ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800'
                             : 'bg-amber-950/60 text-amber-300 border-amber-800'
-                        }`}>
-                          {ord.order_status.replace('_', ' ').toUpperCase()}
+                        } font-semibold px-2 py-0.5 rounded`}>
+                          {order.order_status.replace('_', ' ').toUpperCase()}
                         </span>
                       </div>
-                      <span className="text-[11px] text-[#9CA3AF] font-mono mt-0.5 block">
-                        {ord.order_number} · ₦{(ord.amount_kobo / 100).toLocaleString('en-NG')}
+                      <span className="text-xs text-[#9CA3AF] block mt-0.5">
+                        {order.listing_snapshot.name} · ₦{(order.amount_kobo / 100).toLocaleString('en-NG')}
                       </span>
                     </div>
-
                     <Link
-                      to={`/orders/${ord.id}`}
-                      className="px-3 py-1.5 text-xs font-semibold text-[#FACC15] hover:bg-[#161C2C] border border-[#1E2638] rounded-xl inline-flex items-center gap-1 transition-colors"
+                      to={`/orders/${order.id}`}
+                      className="text-xs font-bold text-[#FACC15] hover:text-[#EAB308] underline shrink-0"
                     >
-                      <span>View</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
+                      View Details
                     </Link>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             )}
-          </div>
-        </div>
+          </motion.div>
 
-        <section className="mt-8 rounded-2xl border border-red-900/50 bg-[#111622] p-6">
-          <h2 className="font-display font-bold text-sm text-red-300">Delete Account</h2>
-          <p className="mt-2 text-xs leading-relaxed text-[#9CA3AF]">
-            This permanently removes your login and signs out all sessions. Your existing orders are retained in order history.
-            The last owner account cannot be deleted.
-          </p>
-          {!showDelete ? (
-            <button
-              type="button"
-              onClick={() => { setShowDelete(true); setDeleteError(null); }}
-              className="mt-4 px-4 py-2 text-xs font-semibold text-red-300 border border-red-900/60 hover:bg-red-950/40 rounded-xl inline-flex items-center gap-2"
-            >
-              <Trash2 className="w-3.5 h-3.5" /> Delete Account
-            </button>
-          ) : (
-            <form onSubmit={handleDeleteAccount} className="mt-4 max-w-md space-y-3">
-              {deleteError && <div className="rounded-lg border border-red-800 bg-red-950/50 p-3 text-xs text-red-300 flex gap-2"><AlertCircle className="w-4 h-4 shrink-0" />{deleteError}</div>}
-              <label className="block text-xs text-[#9CA3AF]">
-                Current password
-                <input type="password" required autoComplete="current-password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} className="mt-1 w-full px-3.5 py-2.5 text-sm bg-[#0B0F17] border border-[#1E2638] rounded-xl text-white" />
-              </label>
-              <label className="block text-xs text-[#9CA3AF]">
-                Type <span className="font-mono font-bold text-white">DELETE</span> to confirm
-                <input type="text" required value={deletePhrase} onChange={(e) => setDeletePhrase(e.target.value)} className="mt-1 w-full px-3.5 py-2.5 text-sm bg-[#0B0F17] border border-[#1E2638] rounded-xl text-white" />
-              </label>
-              <div className="flex gap-3">
-                <button type="button" disabled={deleting} onClick={() => { setShowDelete(false); setDeletePassword(''); setDeletePhrase(''); setDeleteError(null); }} className="px-4 py-2 text-xs font-semibold text-white border border-[#1E2638] rounded-xl disabled:opacity-60">Cancel</button>
-                <button type="submit" disabled={deleting || deletePhrase !== 'DELETE'} className="px-4 py-2 text-xs font-bold text-white bg-red-700 hover:bg-red-600 rounded-xl disabled:opacity-50">{deleting ? 'Deleting…' : 'Permanently Delete Account'}</button>
+          {/* Account Actions */}
+          <motion.div
+            whileHover={{ y: -4, scale: 1.01 }}
+            className="md:col-span-1 bg-[#111622] rounded-2xl border border-[#1F2637] p-6 space-y-4 shadow-xl"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[#0B0F17] border border-[#1E2638] flex items-center justify-center text-[#FACC15]">
+                <Trash2 className="w-5 h-5 text-[#FACC15]" />
               </div>
-            </form>
-          )}
-        </section>
+              <div>
+                <span className="text-xs text-[#6B7280] block">Danger Zone</span>
+                <span className="text-xs text-red-400 block">Permanent actions</span>
+              </div>
+            </div>
+
+            {showDelete ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mt-4 max-w-md space-y-3"
+              >
+                {deleteError && <div className="rounded-lg border border-red-800 bg-red-950/50 p-3 text-xs text-red-300 flex gap-2"><AlertCircle className="w-4 h-4 shrink-0" />{deleteError}</div>}
+                <label className="block text-xs text-[#9CA3AF]">
+                  Current password
+                  <input type="password" required autoComplete="current-password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} className="mt-1 w-full px-3.5 py-2.5 text-sm bg-[#0B0F17] border border-[#1E2638] rounded-xl text-white" />
+                </label>
+                <label className="block text-xs text-[#9CA3AF]">
+                  Type <span className="font-mono font-bold text-white">DELETE</span> to confirm
+                  <input type="text" required value={deletePhrase} onChange={(e) => setDeletePhrase(e.target.value)} className="mt-1 w-full px-3.5 py-2.5 text-sm bg-[#0B0F17] border border-[#1E2638] rounded-xl text-white" />
+                </label>
+                <div className="flex gap-3">
+                  <motion.button
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    type="button" disabled={deleting} onClick={() => { setShowDelete(false); setDeletePassword(''); setDeletePhrase(''); setDeleteError(null); }}
+                    className="px-4 py-2 text-xs font-semibold text-white border border-[#1E2638] rounded-xl disabled:opacity-60"
+                  >
+                    Cancel
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    type="submit" disabled={deleting || deletePhrase !== 'DELETE'}
+                    className="px-4 py-2 text-xs font-bold text-white bg-red-700 hover:bg-red-600 rounded-xl disabled:opacity-50"
+                  >
+                    {deleting ? 'Deleting…' : 'Permanently Delete Account'}
+                  </motion.button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.button
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setShowDelete(true)}
+                className="w-full py-3 text-xs font-bold text-red-400 hover:text-red-300 underline transition-colors cursor-pointer text-left"
+              >
+                Delete Account
+              </motion.button>
+            )}
+          </motion.div>
+        </div>
       </main>
 
       <Footer />
-    </div>
+    </motion.div>
   );
 };

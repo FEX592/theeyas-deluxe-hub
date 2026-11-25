@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api.ts';
 import { useAuth } from '../context/AuthContext.tsx';
@@ -38,12 +39,23 @@ export const AdminInvitePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0A0D14] text-[#F3F4F6]">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="min-h-screen flex flex-col bg-[#0A0D14] text-[#F3F4F6]"
+    >
       <Header />
 
       <main className="flex-1 max-w-md w-full mx-auto px-4 py-16 md:py-24">
-        <div className="bg-[#111622] rounded-2xl border border-[#1F2637] p-8 shadow-xl">
-          <div className="text-center mb-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-[#111622] rounded-2xl border border-[#1F2637] p-8 shadow-xl"
+        >
+          <motion.div
+            whileTap={{ scale: 0.97 }}
+            className="text-center mb-6"
+          >
             <div className="w-12 h-12 rounded-xl bg-[#0B0F17] border border-[#1E2638] flex items-center justify-center text-[#FACC15] mx-auto mb-3">
               <Users className="w-6 h-6 text-[#FACC15]" />
             </div>
@@ -53,13 +65,17 @@ export const AdminInvitePage: React.FC = () => {
             <p className="text-xs text-[#9CA3AF] mt-1">
               You have been invited to join the administrative team of THEEYA'S DELUXE HUB.
             </p>
-          </div>
+          </motion.div>
 
           {error && (
-            <div className="mb-6 p-3 rounded-xl bg-red-950/60 border border-red-800 text-xs text-red-300 flex items-start gap-2">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-3 rounded-xl bg-red-950/60 border border-red-800 text-xs text-red-300 flex items-start gap-2"
+            >
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
               <span>{error}</span>
-            </div>
+            </motion.div>
           )}
 
           <form onSubmit={handleRedeem} className="space-y-4">
@@ -92,19 +108,21 @@ export const AdminInvitePage: React.FC = () => {
             </div>
 
             <div className="pt-2">
-              <button
+              <motion.button
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.97 }}
                 type="submit"
                 disabled={submitting}
                 className="w-full py-3.5 px-6 text-sm font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl transition-all shadow-md disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"
               >
                 <span>{submitting ? 'Verifying Invite...' : 'Accept Invitation & Enter'}</span>
-              </button>
+              </motion.button>
             </div>
           </form>
-        </div>
+        </motion.div>
       </main>
 
       <Footer />
-    </div>
+    </motion.div>
   );
 };

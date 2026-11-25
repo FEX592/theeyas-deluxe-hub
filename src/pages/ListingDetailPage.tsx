@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api.ts';
 import { Listing, Category } from '../types.ts';
@@ -45,9 +46,15 @@ export const ListingDetailPage: React.FC = () => {
     return (
       <div className="min-h-screen flex flex-col bg-[#0A0D14] text-[#F3F4F6]">
         <Header />
-        <main className="flex-1 max-w-5xl mx-auto px-4 py-16 w-full animate-pulse space-y-6">
-          <div className="h-6 w-36 bg-[#161C2C] rounded-lg" />
-          <div className="h-96 bg-[#111622] rounded-2xl border border-[#1F2637]" />
+        <main className="flex-1 max-w-5xl mx-auto px-4 py-16 w-full">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="space-y-6"
+          >
+            <div className="h-6 w-36 bg-[#161C2C] rounded-lg animate-pulse" />
+            <div className="h-96 bg-[#111622] rounded-2xl border border-[#1F2637] animate-pulse" />
+          </motion.div>
         </main>
         <Footer />
       </div>
@@ -56,35 +63,58 @@ export const ListingDetailPage: React.FC = () => {
 
   if (error || !listing) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#0A0D14] text-[#F3F4F6]">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="min-h-screen flex flex-col bg-[#0A0D14] text-[#F3F4F6]"
+      >
         <Header />
         <main className="flex-1 max-w-xl mx-auto px-4 py-20 text-center">
-          <div className="bg-[#111622] rounded-2xl border border-[#1F2637] p-8 shadow-xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-[#111622] rounded-2xl border border-[#1F2637] p-8 shadow-xl"
+          >
             <h2 className="font-display font-bold text-2xl text-white mb-3">WhatsApp Group or Channel Not Found</h2>
             <p className="text-sm text-[#9CA3AF] mb-6">
               The requested WhatsApp Group or Channel listing does not exist, has been archived, or is currently unpublished.
             </p>
-            <Link
-              to="/marketplace"
-              className="px-5 py-2.5 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl inline-flex items-center gap-2 transition-all shadow-md"
+            <motion.div
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              asChild
             >
-              <ArrowLeft className="w-4 h-4 text-black" />
-              <span>Return to Marketplace</span>
-            </Link>
-          </div>
+              <Link
+                to="/marketplace"
+                className="px-5 py-2.5 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl inline-flex items-center gap-2 transition-all shadow-md"
+              >
+                <ArrowLeft className="w-4 h-4 text-black" />
+                <span>Return to Marketplace</span>
+              </Link>
+            </motion.div>
+          </motion.div>
         </main>
         <Footer />
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0A0D14] text-[#F3F4F6]">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="min-h-screen flex flex-col bg-[#0A0D14] text-[#F3F4F6]"
+    >
       <Header />
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-14">
         {/* Breadcrumb Navigation */}
-        <div className="mb-8">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mb-8"
+        >
           <Link
             to="/marketplace"
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#FACC15] hover:text-[#EAB308] transition-colors mb-3"
@@ -99,16 +129,24 @@ export const ListingDetailPage: React.FC = () => {
             <span aria-hidden="true" className="text-[#6B7280]">/</span>
             <span className="text-white font-semibold truncate max-w-xs">{listing.name}</span>
           </div>
-        </div>
+        </motion.div>
 
         {/* 2-Column Contiguous Purchase Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           {/* Left Column: Visual Media & Full Details */}
-          <div className="lg:col-span-7 space-y-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="lg:col-span-7 space-y-8"
+          >
             <ListingMediaGallery coverUrl={listing.image_url} title={listing.name} media={listing.gallery_media || []} />
 
             {/* Description Section */}
-            <div className="bg-[#111622] rounded-2xl border border-[#1F2637] p-6 md:p-8 space-y-6 shadow-xl">
+            <motion.div
+              whileHover={{ shadow: '0 0 24px rgba(214, 179, 106, 0.12)' }}
+              className="bg-[#111622] rounded-2xl border border-[#1F2637] p-6 md:p-8 space-y-6 shadow-xl"
+            >
               <div>
                 <h2 className="font-display font-bold text-lg text-white mb-3">ABOUT</h2>
                 <div className="text-sm text-[#9CA3AF] leading-relaxed whitespace-pre-line space-y-4">
@@ -117,35 +155,51 @@ export const ListingDetailPage: React.FC = () => {
               </div>
 
               {/* Verified Features */}
-              <div className="pt-6 border-t border-[#1F2637] space-y-3">
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
+                }}
+                initial="hidden"
+                animate="show"
+                className="pt-6 border-t border-[#1F2637] space-y-3"
+              >
                 <h3 className="font-display font-semibold text-xs tracking-wider uppercase text-[#FACC15]">
                   WhatsApp Listing & Purchase Details
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-[#9CA3AF]">
-                  <div className="flex items-center gap-2">
+                  <motion.li whileHover={{ x: 4 }} className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
                     <span>Verified WhatsApp Group or Channel</span>
-                  </div>
-                  <div className="flex items-center gap-2">
+                  </motion.li>
+                  <motion.li whileHover={{ x: 4 }} className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
                     <span>Verified administrator link target</span>
-                  </div>
-                  <div className="flex items-center gap-2">
+                  </motion.li>
+                  <motion.li whileHover={{ x: 4 }} className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
                     <span>Secure Paystack server settlement</span>
-                  </div>
-                  <div className="flex items-center gap-2">
+                  </motion.li>
+                  <motion.li whileHover={{ x: 4 }} className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
                     <span>Order-bound invitation receipt</span>
-                  </div>
+                  </motion.li>
                 </div>
-              </div>
-            </div>
-          </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
 
           {/* Right Column: Contiguous Purchase Module (Sticky on Desktop) */}
-          <div className="lg:col-span-5 lg:sticky lg:top-28 space-y-6">
-            <div className="bg-[#111622] rounded-2xl border border-[#1F2637] p-6 md:p-8 shadow-xl space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="lg:col-span-5 lg:sticky lg:top-28 space-y-6"
+          >
+            <motion.div
+              whileHover={{ y: -2 }}
+              className="bg-[#111622] rounded-2xl border border-[#1F2637] p-6 md:p-8 shadow-xl space-y-6"
+            >
               {/* Type & Category Header */}
               <div>
                 <div className="flex items-center gap-2 text-xs text-[#9CA3AF] mb-2 font-medium">
@@ -178,7 +232,10 @@ export const ListingDetailPage: React.FC = () => {
               </div>
 
               {/* Fulfillment Mode Callout */}
-              <div className="p-4 rounded-xl border border-[#1E2638] bg-[#0B0F17] space-y-2 text-xs text-[#9CA3AF]">
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                className="p-4 rounded-xl border border-[#1E2638] bg-[#0B0F17] space-y-2 text-xs text-[#9CA3AF]"
+              >
                 <div className="flex items-center gap-2 font-semibold text-white">
                   <Zap className="w-4 h-4 text-[#FACC15]" />
                   <span>
@@ -192,35 +249,40 @@ export const ListingDetailPage: React.FC = () => {
                     ? 'After Paystack confirms your purchase of this WhatsApp Group or Channel, we email you an invitation to join.'
                     : 'After Paystack confirms your purchase of this WhatsApp Group or Channel, our team reviews your order and emails you an invitation to join.'}
                 </p>
-              </div>
+              </motion.div>
 
               {/* Primary Buy CTA */}
-              <div className="space-y-3 pt-2">
-                <button
+              <motion.div className="space-y-3 pt-2">
+                <motion.button
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={() => navigate(`/checkout/${listing.id}`)}
-                  className="w-full py-4 px-6 bg-[#FACC15] hover:bg-[#EAB308] text-black font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer group"
+                  className="w-full py-4 px-6 bg-[#FACC15] hover:bg-[#EAB308] text-black font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>Buy This WhatsApp {listing.type === 'group' ? 'Group' : 'Channel'}</span>
                   <ArrowRight className="w-4 h-4 text-black group-hover:translate-x-0.5 transition-transform" />
-                </button>
+                </motion.button>
 
                 <div className="flex items-center justify-center gap-2 text-[11px] text-[#9CA3AF]">
                   <Lock className="w-3.5 h-3.5 text-[#6B7280]" />
                   <span>Encrypted 256-bit checkout via Paystack</span>
                 </div>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
             {/* Support Information Box */}
-            <div className="p-4 rounded-2xl bg-[#111622] border border-[#1F2637] text-xs text-[#9CA3AF] space-y-1 text-center shadow-xl">
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              className="p-4 rounded-2xl bg-[#111622] border border-[#1F2637] text-xs text-[#9CA3AF] space-y-1 text-center shadow-xl"
+            >
               <span className="font-semibold text-white block">Questions before purchasing?</span>
               <p>Email our support team at <a href="mailto:support@theeyasdeluxehub.com" className="text-[#FACC15] underline font-medium">support@theeyasdeluxehub.com</a></p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </main>
 
       <Footer />
-    </div>
+    </motion.div>
   );
 };

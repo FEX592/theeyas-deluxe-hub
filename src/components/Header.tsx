@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.tsx';
 import { Shield, User, Menu, X } from 'lucide-react';
@@ -110,57 +111,64 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Mobile dropdown */}
-        {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-[#1F2637] space-y-2 bg-[#0A0D14]">
-            <Link
-              to="/"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 text-sm font-medium text-white hover:bg-[#161C2C] rounded-lg"
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="md:hidden py-4 border-t border-[#1F2637] bg-[#0A0D14]"
             >
-              Home
-            </Link>
-            <Link
-              to="/marketplace"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 text-sm font-medium text-white hover:bg-[#161C2C] rounded-lg"
-            >
-              Marketplace
-            </Link>
-            <Link
-              to="/track-order"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 text-sm font-medium text-white hover:bg-[#161C2C] rounded-lg"
-            >
-              Track Order
-            </Link>
-            {isAdmin && (
               <Link
-                to="/admin"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 text-sm font-bold text-[#FACC15] hover:bg-[#161C2C] rounded-lg"
-              >
-                Admin Console
-              </Link>
-            )}
-            {profile ? (
-              <Link
-                to="/account"
+                to="/"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block px-3 py-2 text-sm font-medium text-white hover:bg-[#161C2C] rounded-lg"
               >
-                Account Profile
+                Home
               </Link>
-            ) : (
               <Link
-                to="/login"
+                to="/marketplace"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 text-sm font-medium text-[#FACC15] hover:bg-[#161C2C] rounded-lg"
+                className="block px-3 py-2 text-sm font-medium text-white hover:bg-[#161C2C] rounded-lg"
               >
-                Sign In
+                Marketplace
               </Link>
-            )}
-          </div>
-        )}
+              <Link
+                to="/track-order"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 text-sm font-medium text-white hover:bg-[#161C2C] rounded-lg"
+              >
+                Track Order
+              </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 text-sm font-bold text-[#FACC15] hover:bg-[#161C2C] rounded-lg"
+                >
+                  Admin Console
+                </Link>
+              )}
+              {profile ? (
+                <Link
+                  to="/account"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 text-sm font-medium text-white hover:bg-[#161C2C] rounded-lg"
+                >
+                  Account Profile
+                </Link>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 text-sm font-medium text-[#FACC15] hover:bg-[#161C2C] rounded-lg"
+                >
+                  Sign In
+                </Link>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </header>
   );

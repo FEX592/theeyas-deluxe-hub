@@ -1,6 +1,6 @@
 import { db } from './db.ts';
 import { Order } from './types.ts';
-import sharp from 'sharp';
+
 import { readFileSync } from 'node:fs';
 
 export interface SendEmailParams {
@@ -73,6 +73,7 @@ export function buildReceiptSvg(order: Order): string {
 }
 
 export async function buildReceiptPng(order: Order): Promise<string> {
+  const sharp = (await import('sharp')).default;
   return (await sharp(Buffer.from(buildReceiptSvg(order))).png().toBuffer()).toString('base64');
 }
 

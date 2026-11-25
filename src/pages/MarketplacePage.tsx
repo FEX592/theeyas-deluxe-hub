@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api.ts';
 import { Listing, Category, ListingType } from '../types.ts';
 import { Header } from '../components/Header.tsx';
@@ -87,22 +88,39 @@ export const MarketplacePage: React.FC = () => {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
         {/* Header Breadcrumb & Title */}
         <div className="mb-8">
-          <div className="flex items-center gap-2 text-xs text-[#9CA3AF] mb-2 font-medium">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-2 text-xs text-[#9CA3AF] mb-2 font-medium"
+          >
             <span>Theeya's Deluxe Hub</span>
             <span aria-hidden="true" className="text-[#6B7280]">/</span>
             <span className="text-[#FACC15] font-semibold">Marketplace Catalogue</span>
-          </div>
+          </motion.div>
 
-          <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight">
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0, transition: { delay: 0.1, duration: 0.6, ease: 'easeOut' } }}
+            className="font-display font-extrabold text-3xl sm:text-4xl text-white tracking-tight"
+          >
             WhatsApp Groups & Channels
-          </h1>
-          <p className="mt-2 text-sm text-[#9CA3AF] max-w-2xl">
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0, transition: { delay: 0.2, duration: 0.6, ease: 'easeOut' } }}
+            className="mt-2 text-sm text-[#9CA3AF] max-w-2xl"
+          >
             Browse WhatsApp Groups and Channels with verified prices in NGN and clear order fulfillment.
-          </p>
+          </motion.p>
         </div>
 
         {/* Filter & Control Bar */}
-        <div className="bg-[#111622] rounded-2xl border border-[#1F2637] p-4 mb-8 shadow-xl space-y-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0, transition: { delay: 0.3, duration: 0.6, ease: 'easeOut' } }}
+          className="bg-[#111622] rounded-2xl border border-[#1F2637] p-4 mb-8 shadow-xl space-y-4"
+        >
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
             {/* Search Input */}
             <div className="relative flex-1">
@@ -204,46 +222,71 @@ export const MarketplacePage: React.FC = () => {
               )}
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Content Region */}
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((n) => (
-              <div key={n} className="h-72 rounded-2xl bg-[#111622] border border-[#1F2637] animate-pulse p-4" />
-            ))}
-          </div>
-        ) : error ? (
-          <div className="bg-[#111622] border border-red-900 rounded-2xl p-8 text-center max-w-md mx-auto">
-            <p className="text-sm text-red-400 font-medium mb-4">{error}</p>
-            <button
-              onClick={loadData}
-              className="px-5 py-2.5 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl"
-            >
-              Retry Loading
-            </button>
-          </div>
-        ) : filteredListings.length === 0 ? (
-          <div className="bg-[#111622] rounded-2xl border border-[#1F2637] p-12 text-center max-w-lg mx-auto space-y-4">
-            <h3 className="font-display font-bold text-lg text-white">No Matching Communities Found</h3>
-            <p className="text-xs text-[#9CA3AF] leading-relaxed">
-              No WhatsApp Groups or Channels matched your filter criteria. Try resetting search filters.
-            </p>
-            <button
-              onClick={clearFilters}
-              className="px-5 py-2.5 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl transition-all cursor-pointer"
-            >
-              Clear All Filters
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredListings.map((listing) => {
-              const cat = categories.find((c) => c.id === listing.category_id);
-              return <ListingCard key={listing.id} listing={listing} categoryName={cat?.name} />;
-            })}
-          </div>
-        )}
+        <div className="relative min-h-[400px]">
+          <AnimatePresence mode="popLayout">
+            {loading ? (
+              <motion.div
+                key="loading"
+                layoutId="grid-container"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
+                {[1, 2, 3, 4, 5, 6].map((n) => (
+                  <div key={n} className="h-72 rounded-2xl bg-[#111622] border border-[#1F2637] animate-pulse" />
+                ))}
+              </motion.div>
+            ) : error ? (
+              <motion.div
+                key="error"
+                layoutId="grid-container"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="bg-[#111622] border border-red-900 rounded-2xl p-8 text-center max-w-md mx-auto"
+              >
+                <p className="text-sm text-red-400 font-medium mb-4">{error}</p>
+                <button
+                  onClick={loadData}
+                  className="px-5 py-2.5 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl"
+                >
+                  Retry Loading
+                </button>
+              </motion.div>
+            ) : filteredListings.length === 0 ? (
+              <motion.div
+                key="empty"
+                layoutId="grid-container"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="bg-[#111622] rounded-2xl border border-[#1F2637] p-12 text-center max-w-lg mx-auto space-y-4"
+              >
+                <h3 className="font-display font-bold text-lg text-white">No Matching Communities Found</h3>
+                <p className="text-xs text-[#9CA3AF] leading-relaxed">
+                  No WhatsApp Groups or Channels matched your filter criteria. Try resetting search filters.
+                </p>
+                <button
+                  onClick={clearFilters}
+                  className="px-5 py-2.5 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl transition-all cursor-pointer"
+                >
+                  Clear All Filters
+                </button>
+              </motion.div>
+            ) : (
+              <div key="grid" layoutId="grid-container" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredListings.map((listing, idx) => {
+                  const cat = categories.find((c) => c.id === listing.category_id);
+                  return <ListingCard key={listing.id} listing={listing} categoryName={cat?.name} index={idx} />;
+                })}
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
       </main>
 
       <Footer />

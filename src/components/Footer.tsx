@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { MessageSquare, Shield, HelpCircle, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
@@ -22,7 +23,12 @@ export const Footer: React.FC = () => {
 
   return (
     <footer className="bg-[#0A0D14] text-[#F3F4F6] border-t border-[#1F2637]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.6 }}
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16"
+      >
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           {/* Brand Column */}
           <div className="md:col-span-2 space-y-4">
@@ -118,7 +124,7 @@ export const Footer: React.FC = () => {
           <p>© {new Date().getFullYear()} THEEYA'S DELUXE HUB. All rights reserved.</p>
           <p>Shop curated WhatsApp Groups and Channels.</p>
         </div>
-      </div>
+      </motion.div>
     </footer>
   );
 };

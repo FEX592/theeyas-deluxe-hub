@@ -1,16 +1,28 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Listing } from '../types.ts';
+import { motion } from 'framer-motion';
 import { ArrowRight, MessageSquare, Radio } from 'lucide-react';
 
 interface ListingCardProps {
   listing: Listing;
   categoryName?: string;
+  index?: number;
 }
 
-export const ListingCard: React.FC<ListingCardProps> = ({ listing, categoryName }) => {
+export const ListingCard: React.FC<ListingCardProps> = ({ listing, categoryName, index = 0 }) => {
   return (
-    <div className="group flex flex-col bg-[#111622] rounded-2xl border border-[#1F2637] overflow-hidden hover:border-[#D6B36A] hover:shadow-2xl transition-all duration-200">
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{
+        opacity: 1,
+        y: 0,
+        transition: { delay: index * 0.06, duration: 0.5, ease: 'easeOut' },
+      }}
+      whileHover={{ y: -6, scale: 1.01 }}
+      whileTap={{ scale: 0.98 }}
+      className="group flex flex-col bg-[#111622] rounded-2xl border border-[#1F2637] overflow-hidden"
+    >
       {/* Listing Media Thumbnail */}
       <div className="relative aspect-[16/10] w-full bg-[#0B0F17] overflow-hidden">
         <img
@@ -80,6 +92,6 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, categoryName 
           </Link>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

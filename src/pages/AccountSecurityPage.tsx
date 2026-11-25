@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.tsx';
 import { Header } from '../components/Header.tsx';
@@ -20,11 +21,19 @@ export const AccountSecurityPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0A0D14] text-[#F3F4F6]">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="min-h-screen flex flex-col bg-[#0A0D14] text-[#F3F4F6]"
+    >
       <Header />
 
       <main className="flex-1 max-w-2xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
-        <div className="mb-8">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="mb-8"
+        >
           <Link
             to="/account"
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#FACC15] hover:text-[#EAB308] mb-3"
@@ -38,9 +47,13 @@ export const AccountSecurityPage: React.FC = () => {
           <p className="text-xs text-[#9CA3AF] mt-1">
             Manage your credentials and authentication security.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="bg-[#111622] rounded-2xl border border-[#1F2637] p-6 sm:p-8 shadow-xl space-y-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-[#111622] rounded-2xl border border-[#1F2637] p-6 sm:p-8 shadow-xl space-y-6"
+        >
           <div className="flex items-center gap-3 pb-6 border-b border-[#1F2637]">
             <div className="w-10 h-10 rounded-xl bg-[#0B0F17] border border-[#1E2638] flex items-center justify-center text-[#FACC15]">
               <Shield className="w-5 h-5 text-[#FACC15]" />
@@ -52,10 +65,14 @@ export const AccountSecurityPage: React.FC = () => {
           </div>
 
           {saved && (
-            <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-800 text-xs text-emerald-300 flex items-center gap-2">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-800 text-xs text-emerald-300 flex items-center gap-2"
+            >
               <Check className="w-4 h-4 text-emerald-400" />
               <span>Password updated successfully.</span>
-            </div>
+            </motion.div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -89,18 +106,20 @@ export const AccountSecurityPage: React.FC = () => {
             </div>
 
             <div className="pt-2">
-              <button
+              <motion.button
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.97 }}
                 type="submit"
                 className="px-5 py-2.5 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl transition-all shadow-md cursor-pointer"
               >
                 Update Password
-              </button>
+              </motion.button>
             </div>
           </form>
-        </div>
+        </motion.div>
       </main>
 
       <Footer />
-    </div>
+    </motion.div>
   );
 };

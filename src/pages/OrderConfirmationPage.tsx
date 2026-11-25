@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { api } from '../lib/api.ts';
 import { Order } from '../types.ts';
@@ -9,8 +10,6 @@ import { CheckCircle2, Clock, AlertTriangle, ArrowRight, Mail, MessageSquare, Lo
 export const OrderConfirmationPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const [searchParams] = useSearchParams();
-  // Paystack normally sends both `reference` and `trxref`; accept either so
-  // server-side verification runs on every valid callback shape.
   const reference = searchParams.get('reference') || searchParams.get('trxref');
 
   const [order, setOrder] = useState<Order | null>(null);
@@ -50,34 +49,55 @@ export const OrderConfirmationPage: React.FC = () => {
   }, [orderId, reference]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0A0D14] text-[#F3F4F6]">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="min-h-screen flex flex-col bg-[#0A0D14] text-[#F3F4F6]"
+    >
       <Header />
 
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         {loading || verifying ? (
-          <div className="bg-[#111622] rounded-2xl border border-[#1F2637] p-12 text-center shadow-xl">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-[#111622] rounded-2xl border border-[#1F2637] p-12 text-center shadow-xl"
+          >
             <Loader2 className="w-10 h-10 animate-spin text-[#FACC15] mx-auto mb-4" />
             <h2 className="font-display font-bold text-lg text-white">
               {verifying ? 'Verifying payment with Paystack...' : 'Retrieving order confirmation...'}
             </h2>
             <p className="text-xs text-[#9CA3AF] mt-1">Please wait while we confirm your transaction state.</p>
-          </div>
+          </motion.div>
         ) : error || !order ? (
-          <div className="bg-[#111622] rounded-2xl border border-red-800 p-8 text-center shadow-xl">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-[#111622] rounded-2xl border border-red-800 p-8 text-center shadow-xl"
+          >
             <AlertTriangle className="w-10 h-10 text-amber-400 mx-auto mb-3" />
             <h2 className="font-display font-bold text-lg text-white">Order Lookup Failed</h2>
             <p className="text-xs text-[#9CA3AF] mt-1 mb-6">{error || 'Order could not be found.'}</p>
-            <Link
-              to="/marketplace"
-              className="px-5 py-2.5 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl transition-all shadow-md inline-block"
-            >
-              Browse Marketplace
-            </Link>
-          </div>
+            <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} asChild>
+              <Link
+                to="/marketplace"
+                className="px-5 py-2.5 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl transition-all shadow-md inline-block"
+              >
+                Browse Marketplace
+              </Link>
+            </motion.div>
+          </motion.div>
         ) : (
-          <div className="bg-[#111622] rounded-2xl border border-[#1F2637] p-6 sm:p-10 shadow-xl space-y-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-[#111622] rounded-2xl border border-[#1F2637] p-6 sm:p-10 shadow-xl space-y-8"
+          >
             {/* Status Header */}
-            <div className="text-center pb-6 border-b border-[#1F2637]">
+            <motion.div
+              whileTap={{ scale: 0.97 }}
+              className="text-center pb-6 border-b border-[#1F2637]"
+            >
               {order.payment_status === 'paid' ? (
                 <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-950/60 border border-emerald-800 text-emerald-400 mb-3">
                   <CheckCircle2 className="w-8 h-8" />
@@ -99,11 +119,14 @@ export const OrderConfirmationPage: React.FC = () => {
               <p className="text-xs text-[#9CA3AF] mt-2 font-mono">
                 Order ID: <span className="font-bold text-[#FACC15]">{order.order_number}</span>
               </p>
-            </div>
+            </motion.div>
 
             {/* If Access is already ready (automatic mode) */}
             {fulfillment && order.order_status === 'completed' && (
-              <div className="p-6 rounded-2xl bg-[#0B0F17] border border-[#FACC15]/40 text-center space-y-3">
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                className="p-6 rounded-2xl bg-[#0B0F17] border border-[#FACC15]/40 text-center space-y-3"
+              >
                 <span className="text-xs uppercase tracking-wider text-[#FACC15] font-bold block">
                   Your WhatsApp Group or Channel Invitation Link
                 </span>
@@ -111,7 +134,9 @@ export const OrderConfirmationPage: React.FC = () => {
                   Your purchase of <strong className="text-white">{order.listing_snapshot.name}</strong> is confirmed. Use the link below to join your WhatsApp Group or Channel.
                 </p>
                 <div className="pt-2">
-                  <a
+                  <motion.a
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.97 }}
                     href={fulfillment.access_url}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -119,16 +144,19 @@ export const OrderConfirmationPage: React.FC = () => {
                   >
                     <MessageSquare className="w-4 h-4 text-black" />
                     <span>Join Your WhatsApp Group or Channel</span>
-                  </a>
+                  </motion.a>
                 </div>
                 <p className="text-[11px] text-[#6B7280] pt-1">
                   We have also dispatched an invitation copy to <strong className="text-[#9CA3AF]">{order.customer_email}</strong>.
                 </p>
-              </div>
+              </motion.div>
             )}
 
             {/* Order Details Grid */}
-            <div className="space-y-4">
+            <motion.div
+              whileHover={{ shadow: '0 0 24px rgba(214, 179, 106, 0.12)' }}
+              className="space-y-4"
+            >
               <h3 className="font-display font-semibold text-sm text-white uppercase tracking-wide">
                 Purchase Summary
               </h3>
@@ -167,10 +195,13 @@ export const OrderConfirmationPage: React.FC = () => {
                   <span className="font-mono text-white">{order.whatsapp_number}</span>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Email Instructions Box */}
-            <div className="p-4 rounded-xl bg-[#0B0F17] border border-[#1E2638] text-xs text-[#9CA3AF] flex items-start gap-3">
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              className="p-4 rounded-xl bg-[#0B0F17] border border-[#1E2638] text-xs text-[#9CA3AF] flex items-start gap-3"
+            >
               <Mail className="w-5 h-5 text-[#FACC15] shrink-0 mt-0.5" />
               <div>
                 <span className="font-bold text-white block">Transactional Email Notice</span>
@@ -178,10 +209,14 @@ export const OrderConfirmationPage: React.FC = () => {
                   Transactional order confirmation and payment receipts are sent via Brevo to <strong className="text-white">{order.customer_email}</strong>. Please check your inbox and spam folder.
                 </p>
               </div>
-            </div>
+            </motion.div>
 
             {/* Navigation Actions */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#1F2637]">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#1F2637]"
+            >
               <Link
                 to={`/track-order?orderId=${order.order_number}`}
                 className="w-full sm:w-auto px-5 py-2.5 text-xs font-semibold text-white bg-[#0B0F17] hover:bg-[#161C2C] border border-[#1E2638] rounded-xl text-center transition-colors"
@@ -189,19 +224,21 @@ export const OrderConfirmationPage: React.FC = () => {
                 Track Live Fulfillment Status
               </Link>
 
-              <Link
-                to="/marketplace"
-                className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl text-center inline-flex items-center justify-center gap-1.5 transition-all shadow-md"
-              >
-                <span>Browse More Communities</span>
-                <ArrowRight className="w-4 h-4 text-black" />
-              </Link>
-            </div>
-          </div>
+              <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} asChild>
+                <Link
+                  to="/marketplace"
+                  className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl text-center inline-flex items-center justify-center gap-1.5 transition-all shadow-md"
+                >
+                  <span>Browse More Communities</span>
+                  <ArrowRight className="w-4 h-4 text-black" />
+                </Link>
+              </motion.div>
+            </motion.div>
+          </motion.div>
         )}
       </main>
 
       <Footer />
-    </div>
+    </motion.div>
   );
 };
