@@ -115,7 +115,6 @@ export const SignupPage: React.FC = () => {
         <p className="-mt-1 text-[11px] leading-5 text-[#777681]">Use at least 8 characters. The first account becomes the store administrator.</p>
         <motion.button
           whileHover={{ y: -2 }}
-          whileTap={{ scale: 0.97 }}
           type="submit"
           disabled={loading}
           className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#F1D48E] to-[#D6B36A] px-4 py-3.5 text-sm font-bold text-[#211A10] shadow-[0_8px_24px_rgba(214,179,106,0.16)] transition hover:brightness-105 disabled:cursor-wait disabled:opacity-60"

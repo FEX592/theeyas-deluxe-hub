@@ -139,8 +139,7 @@ export const TrackOrderPage: React.FC = () => {
 
             <motion.button
               whileHover={{ y: -2 }}
-              whileTap={{ scale: 0.97 }}
-              type="submit"
+                  type="submit"
               disabled={loading}
               className="w-full py-3.5 px-6 text-sm font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] disabled:opacity-60 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
             >

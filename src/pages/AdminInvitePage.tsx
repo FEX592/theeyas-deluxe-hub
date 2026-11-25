@@ -110,7 +110,6 @@ export const AdminInvitePage: React.FC = () => {
             <div className="pt-2">
               <motion.button
                 whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.97 }}
                 type="submit"
                 disabled={submitting}
                 className="w-full py-3.5 px-6 text-sm font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl transition-all shadow-md disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"

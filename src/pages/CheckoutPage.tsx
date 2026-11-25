@@ -213,8 +213,7 @@ export const CheckoutPage: React.FC = () => {
                 <div className="pt-4">
                   <motion.button
                     whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.97 }}
-                    type="submit"
+                              type="submit"
                     disabled={submitting}
                     className="w-full py-3.5 px-6 text-sm font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] disabled:opacity-60 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >

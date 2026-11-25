@@ -108,8 +108,7 @@ export const AccountSecurityPage: React.FC = () => {
             <div className="pt-2">
               <motion.button
                 whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.97 }}
-                type="submit"
+                      type="submit"
                 className="px-5 py-2.5 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#EAB308] rounded-xl transition-all shadow-md cursor-pointer"
               >
                 Update Password

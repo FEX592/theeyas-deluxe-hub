@@ -252,7 +252,6 @@ export const AccountPage: React.FC = () => {
                   </motion.button>
                   <motion.button
                     whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.97 }}
                     type="submit" disabled={deleting || deletePhrase !== 'DELETE'}
                     className="px-4 py-2 text-xs font-bold text-white bg-red-700 hover:bg-red-600 rounded-xl disabled:opacity-50"
                   >
