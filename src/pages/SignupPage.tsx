@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.tsx';
 import { AuthLayout } from '../components/AuthLayout.tsx';
@@ -35,13 +36,22 @@ export const SignupPage: React.FC = () => {
   return (
     <AuthLayout eyebrow="Join the hub" title="Create your account" description="Set up your profile to explore the marketplace.">
       {error && (
-        <div role="alert" className="mb-5 flex items-start gap-2.5 rounded-xl border border-red-500/25 bg-red-500/[0.08] p-3.5 text-sm text-red-300">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          role="alert"
+          className="mb-5 flex items-start gap-2.5 rounded-xl border border-red-500/25 bg-red-500/[0.08] p-3.5 text-sm text-red-300"
+        >
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{error}</span>
-        </div>
+        </motion.div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-4"
+      >
         <div>
           <label htmlFor="signup-name" className="mb-2 block text-xs font-semibold text-[#D5D2DC]">Full name</label>
           <input
@@ -108,11 +118,15 @@ export const SignupPage: React.FC = () => {
           {loading ? 'Creating account…' : 'Create account'}
           {!loading && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
         </button>
-      </form>
+      </motion.div>
 
-      <p className="mt-6 text-center text-sm text-[#92919B]">
+      <motion.p
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mt-6 text-center text-sm text-[#92919B]"
+      >
         Already have an account? <Link to="/login" className="font-semibold text-[#E5C782] transition hover:text-white">Sign in</Link>
-      </p>
+      </motion.p>
     </AuthLayout>
   );
 };

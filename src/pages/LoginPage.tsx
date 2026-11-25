@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.tsx';
 import { AuthLayout } from '../components/AuthLayout.tsx';
@@ -31,13 +32,22 @@ export const LoginPage: React.FC = () => {
   return (
     <AuthLayout eyebrow="Welcome back" title="Sign in to your account" description="Pick up right where you left off in the hub.">
       {error && (
-        <div role="alert" className="mb-5 flex items-start gap-2.5 rounded-xl border border-red-500/25 bg-red-500/[0.08] p-3.5 text-sm text-red-300">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          role="alert"
+          className="mb-5 flex items-start gap-2.5 rounded-xl border border-red-500/25 bg-red-500/[0.08] p-3.5 text-sm text-red-300"
+        >
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{error}</span>
-        </div>
+        </motion.div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-5"
+      >
         <div>
           <label htmlFor="login-email" className="mb-2 block text-xs font-semibold text-[#D5D2DC]">Email address</label>
           <input
@@ -71,16 +81,24 @@ export const LoginPage: React.FC = () => {
           {loading ? 'Signing in…' : 'Sign in'}
           {!loading && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
         </button>
-      </form>
+      </motion.div>
 
-      <div className="my-6 flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.15em] text-[#62616A]">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="my-6 flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.15em] text-[#62616A]"
+      >
         <span className="h-px flex-1 bg-white/[0.08]" />
         <span>Member sign-in</span>
         <span className="h-px flex-1 bg-white/[0.08]" />
-      </div>
-      <p className="text-center text-sm text-[#92919B]">
+      </motion.div>
+      <motion.p
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center text-sm text-[#92919B]"
+      >
         New to the hub? <Link to="/signup" className="font-semibold text-[#E5C782] transition hover:text-white">Create an account</Link>
-      </p>
+      </motion.p>
     </AuthLayout>
   );
 };
